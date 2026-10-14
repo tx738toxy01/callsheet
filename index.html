@@ -136,6 +136,16 @@
           </button>
 
           <button
+            onclick="toggleTheme()"
+            class="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 transition"
+            title="Prepnúť svetlý / tmavý režim"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364 6.364l-1.414-1.414M6.05 6.05L4.636 4.636m12.728 0l-1.414 1.414M6.05 17.95l-1.414 1.414M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+            </svg>
+          </button>
+
+          <button
             onclick="openSettingsMenu()"
             class="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 transition"
             title="Nastavenia"
@@ -143,16 +153,6 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-          </button>
-
-          <button
-            onclick="toggleTheme()"
-            class="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 transition"
-            title="Prepnúť svetlý / tmavý režim"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364 6.364l-1.414-1.414M6.05 6.05L4.636 4.636m12.728 0l-1.414 1.414M6.05 17.95l-1.414 1.414M12 8a4 4 0 100 8 4 4 0 000-8z"/>
             </svg>
           </button>
         </div>
@@ -249,6 +249,31 @@
   <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6">
     <div id="mainContent"></div>
   </main>
+
+  <div id="scriptReaderOverlay" class="fixed inset-0 z-[60] bg-zinc-900/95 backdrop-blur-md hidden flex-col">
+    <div class="bg-zinc-900 border-b border-zinc-800 px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 text-zinc-100 shrink-0">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <button onclick="closeScriptReader()" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-xs font-extrabold flex items-center gap-1.5 transition shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          <span>Späť do Call Sheetu</span>
+        </button>
+        <select id="scriptJumpSelect" onchange="scrollToScriptScene(this.value)" class="bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs font-bold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-amber-500 max-w-[170px] sm:max-w-xs truncate">
+        </select>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button onclick="adjustScriptFontSize(-1)" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-extrabold transition" title="Zmenšiť písmo">A-</button>
+        <button onclick="adjustScriptFontSize(1)" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-extrabold transition" title="Zväčšiť písmo">A+</button>
+        <button onclick="toggleScriptPaperTheme()" id="scriptPaperThemeBtn" class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-zinc-950 text-xs font-bold transition">Papier / Tmavý</button>
+        <button onclick="closeScriptReader()" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-rose-500 hover:text-white flex items-center justify-center text-zinc-400 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="scriptReaderScroll" class="flex-1 overflow-y-auto p-2 sm:p-6 md:p-10 scroll-smooth">
+      <div id="scriptPaperContainer" class="max-w-3xl mx-auto bg-[#fdfbf7] text-zinc-950 shadow-2xl rounded-xs sm:rounded-md px-5 sm:px-14 py-8 sm:py-14 border border-zinc-300 transition-colors duration-200" style="font-family: 'Courier New', Courier, monospace; font-size: 16px; line-height: 1.55;">
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL SHEET OVERLAY -->
   <div id="modalOverlay" class="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-xs hidden items-end sm:items-center justify-center p-0 sm:p-4" onclick="handleOverlayClick(event)">
@@ -428,6 +453,9 @@
       const c = (rawCat || '').toUpperCase();
       const t = (title || '').toLowerCase();
 
+      if (c === 'SCENÁR' || c === 'SCENAR' || c.includes('SCENÁR') || c.includes('SCENAR')) {
+        return { group: 'SCRIPT', cleanCategory: 'SCENÁR' };
+      }
       if (c.includes('ÚČINKUJÚCI') || c.includes('UCINKUJUCI') || c.includes('HERCI') || c.includes('MODERÁTOR')) {
         return { group: 'CAST', cleanCategory: 'ÚČINKUJÚCI' };
       }
@@ -484,7 +512,7 @@
     function detectSpecialTags(rawCat, title, details) {
       const combined = `${rawCat} ${title} ${details}`;
       const tags = [];
-      if (/POZOR|overiť|meno dodám|prosím,\s*zohnať|pevný termín|iba polodetaily/i.test(combined)) {
+      if (/\bPOZOR\b[:!]?|overiť|meno dodám|prosím,\s*zohnať|pevný termín|iba polodetaily/i.test(combined)) {
         tags.push({ type: 'ALERT', label: 'Pozor' });
       }
       const gpsMatch = combined.match(/(\d{1,2}°\d{1,2}'[\d.]+"[NS]\s+\d{1,2}°\d{1,2}'[\d.]+"[EW])/i);
@@ -1190,14 +1218,16 @@
       document.getElementById('scenesProgressText').textContent = `${doneScenes}/${totalScenes} (${scenesPct}%)`;
       document.getElementById('scenesProgressBar').style.width = `${scenesPct}%`;
 
-      const totalItems = project.items.length;
-      const doneItems = project.items.filter(i => i.checked).length;
+      const nonScriptItems = project.items.filter(i => i.group !== 'SCRIPT');
+      const totalItems = nonScriptItems.length;
+      const doneItems = nonScriptItems.filter(i => i.checked).length;
       const itemsPct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
       document.getElementById('itemsProgressText').textContent = `${doneItems}/${totalItems} (${itemsPct}%)`;
       document.getElementById('itemsProgressBar').style.width = `${itemsPct}%`;
 
       // Filtered Items
       const filteredItems = project.items.filter(it => {
+        if (it.group === 'SCRIPT') return false;
         if (!itemMatchesEpisodeFilter(it, appState.episodeFilter)) return false;
         if (appState.searchCategoryFilter !== 'ALL') {
           if (appState.searchCategoryFilter === 'COSTUMES') {
@@ -1965,7 +1995,7 @@
 
       document.getElementById('modalTitleWrap').innerHTML = `
         <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">${escapeHtml(item.category)}</span>
-        <h2 class="font-extrabold text-base sm:text-lg text-zinc-900 dark:text-white truncate">${escapeHtml(item.title)}</h2>
+        <h2 class="font-extrabold text-base sm:text-lg text-zinc-900 dark:text-white leading-snug">${escapeHtml(item.title)}</h2>
       `;
 
       const parsedCostumes = item.group === 'CAST' ? parseStructuredCostumes(item.details, item.title) : { costumes: [], extraNote: '' };
@@ -2019,7 +2049,7 @@
 
         <div class="space-y-1.5">
           <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Podrobnosti a produkčné poznámky</span>
-          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 text-zinc-800 dark:text-zinc-100 leading-relaxed text-sm">
+          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 text-zinc-800 dark:text-zinc-100 leading-relaxed text-sm max-h-[50vh] overflow-y-auto whitespace-pre-line">
             ${highlightAlerts(escapeHtml(item.details || 'Bez ďalších poznámok.'))}
           </div>
         </div>
@@ -2134,6 +2164,7 @@
       }
       updateModalBackBtn();
 
+      const scripts = scObj.items.filter(i => i.group === 'SCRIPT');
       const locs = scObj.items.filter(i => i.group === 'LOCATIONS');
       const cast = scObj.items.filter(i => i.group === 'CAST');
       const gastro = scObj.items.filter(i => i.group === 'GASTRO');
@@ -2143,6 +2174,25 @@
         <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">${escapeHtml(project.name)}</span>
         <h2 class="font-extrabold text-lg sm:text-xl text-zinc-900 dark:text-white">Obraz ${escapeHtml(sceneCode)}</h2>
       `;
+
+      const renderScriptPreview = () => {
+        if (scripts.length === 0) return '';
+        const scItem = scripts[0];
+        return `
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Scenár obrazu ${escapeHtml(sceneCode)}</span>
+              <button onclick="openScriptReader('${escapeHtml(sceneCode)}')" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-extrabold flex items-center gap-1.5 shadow-2xs transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                <span>Celý scenár (Full Screen)</span>
+              </button>
+            </div>
+            <div onclick="openScriptReader('${escapeHtml(sceneCode)}')" title="Kliknite pre otvorenie celého skrolovateľného scenára" class="cursor-pointer bg-[#fdfbf7] dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-xl p-4 sm:p-5 shadow-inner space-y-2.5 text-xs sm:text-sm hover:border-amber-500 transition" style="font-family: 'Courier New', Courier, monospace; line-height: 1.5;">
+              ${formatScriptLinesHTML(scItem.details)}
+            </div>
+          </div>
+        `;
+      };
 
       const renderGroupList = (label, arr) => {
         if (arr.length === 0) return '';
@@ -2179,7 +2229,7 @@
           </button>
         </div>
 
-        ${renderGroupList('Lokácia', locs)}
+        ${renderScriptPreview()}${renderGroupList('Lokácia', locs)}
         ${renderGroupList('Účinkujúci na pľaci', cast)}
         ${renderGroupList('Gastro v obraze', gastro)}
         ${renderGroupList('Rekvizity a technika', props)}
@@ -2695,12 +2745,147 @@
         .replace(/'/g, '&#39;');
     }
 
+    let scriptFontSize = 16;
+    let scriptDarkPaper = false;
+
+    function formatScriptLinesHTML(rawDetails) {
+      const lines = String(rawDetails || '').split(/\s*\|\|\s*/);
+      return lines.map(line => {
+        let safe = escapeHtml(line)
+          .replace(/&lt;b&gt;(.*?)&lt;\/b&gt;/g, '<strong>$1</strong>')
+          .replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<span class="underline">$1</span>');
+        if (/^(Grafika|VO)/i.test(line.replace(/<\/?b>/g, ''))) {
+          return `<p class="py-1 px-2.5 rounded bg-amber-500/10 border-l-2 border-amber-500">${safe}</p>`;
+        }
+        return `<p>${safe}</p>`;
+      }).join('');
+    }
+
+    function openScriptReader(targetSceneCode = '') {
+      const project = getCurrentProject();
+      const scriptItems = project.items.filter(i => i.group === 'SCRIPT');
+      if (scriptItems.length === 0) {
+        alert('V tomto výrobnom liste zatiaľ nie sú nahraté riadky scenára.');
+        return;
+      }
+
+      const jumpSelect = document.getElementById('scriptJumpSelect');
+      jumpSelect.innerHTML = scriptItems.map((it, idx) => {
+        const scCode = (it.scenesRaw || `UVOD_${idx}`).trim();
+        return `<option value="${escapeHtml(scCode)}" ${scCode === targetSceneCode ? 'selected' : ''}>${escapeHtml(it.title)}</option>`;
+      }).join('');
+
+      renderScriptPaperBlocks();
+
+      const ov = document.getElementById('scriptReaderOverlay');
+      ov.classList.remove('hidden');
+      ov.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+
+      setTimeout(() => {
+        if (targetSceneCode) {
+          scrollToScriptScene(targetSceneCode);
+        } else {
+          document.getElementById('scriptReaderScroll').scrollTop = 0;
+        }
+      }, 40);
+    }
+
+    function renderScriptPaperBlocks() {
+      const project = getCurrentProject();
+      const scriptItems = project.items.filter(i => i.group === 'SCRIPT');
+      const paper = document.getElementById('scriptPaperContainer');
+
+      paper.innerHTML = scriptItems.map((it, idx) => {
+        const scCode = (it.scenesRaw || '').trim();
+        const anchorId = `script-anchor-${scCode || ('UVOD_' + idx)}`;
+        const isDone = scCode ? !!project.sceneDone?.[scCode] : false;
+
+        return `
+          <div id="${escapeHtml(anchorId)}" data-scene-code="${escapeHtml(scCode)}" class="pb-8 mb-8 border-b border-zinc-300/80 dark:border-zinc-800 last:border-none">
+            ${scCode ? `
+              <div class="flex items-center justify-between gap-2 mb-3 pb-1.5 border-b border-dashed border-zinc-300 dark:border-zinc-700 font-sans">
+                <button onclick="closeScriptReader(); openSceneModal('${escapeHtml(scCode)}')" class="text-xs font-extrabold px-2.5 py-1 rounded-lg bg-amber-500 text-zinc-950 hover:bg-amber-400 transition">
+                  Obraz ${escapeHtml(scCode)} • Zostava na pľaci
+                </button>
+                <button onclick="toggleSceneDoneInScript('${escapeHtml(scCode)}')" class="px-3 py-1 rounded-lg text-xs font-extrabold transition flex items-center gap-1 ${
+                  isDone ? 'bg-emerald-500 text-zinc-950' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-emerald-500 hover:text-zinc-950'
+                }">
+                  ${isDone ? `${ICONS.check}<span>Natočené</span>` : '<span>Označiť ako natočené</span>'}
+                </button>
+              </div>
+            ` : ''}
+            <div class="space-y-3.5">
+              ${formatScriptLinesHTML(it.details)}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleSceneDoneInScript(sceneCode) {
+      const project = getCurrentProject();
+      if (!project.sceneDone) project.sceneDone = {};
+      project.sceneDone[sceneCode] = !project.sceneDone[sceneCode];
+      saveState();
+      renderApp();
+      renderScriptPaperBlocks();
+    }
+
+    function scrollToScriptScene(scCode) {
+      const el = document.getElementById(`script-anchor-${scCode}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const sel = document.getElementById('scriptJumpSelect');
+        if (sel) sel.value = scCode;
+      }
+    }
+
+    function adjustScriptFontSize(delta) {
+      scriptFontSize = Math.min(26, Math.max(12, scriptFontSize + delta));
+      const paper = document.getElementById('scriptPaperContainer');
+      if (paper) paper.style.fontSize = `${scriptFontSize}px`;
+    }
+
+    function toggleScriptPaperTheme() {
+      scriptDarkPaper = !scriptDarkPaper;
+      const paper = document.getElementById('scriptPaperContainer');
+      if (!paper) return;
+      if (scriptDarkPaper) {
+        paper.className = 'max-w-3xl mx-auto bg-zinc-950 text-zinc-100 shadow-2xl rounded-xs sm:rounded-md px-5 sm:px-14 py-8 sm:py-14 border border-zinc-800 transition-colors duration-200';
+      } else {
+        paper.className = 'max-w-3xl mx-auto bg-[#fdfbf7] text-zinc-950 shadow-2xl rounded-xs sm:rounded-md px-5 sm:px-14 py-8 sm:py-14 border border-zinc-300 transition-colors duration-200';
+      }
+    }
+
+    function closeScriptReader() {
+      const ov = document.getElementById('scriptReaderOverlay');
+      ov.classList.add('hidden');
+      ov.classList.remove('flex');
+      if (document.getElementById('modalOverlay').classList.contains('hidden')) {
+        document.body.style.overflow = '';
+      }
+    }
+
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape') {
+        if (!document.getElementById('scriptReaderOverlay').classList.contains('hidden')) {
+          closeScriptReader();
+        } else {
+          closeModal();
+        }
+      }
     });
 
     // Boot
     loadState();
+    if (!localStorage.getItem('theme_manually_toggled')) {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
     try {
       history.replaceState({
         activeProject: appState.activeProject,
