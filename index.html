@@ -37,6 +37,42 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
     .dropdown-animate { animation: dropdownIn 0.14s ease-out forwards; }
+
+    .script-done-cross {
+      position: relative;
+    }
+    .script-done-cross::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom right, transparent 49.5%, rgba(24, 24, 27, 0.4) 49.5%, rgba(24, 24, 27, 0.4) 50.5%, transparent 50.5%);
+      pointer-events: none;
+      z-index: 20;
+    }
+    .dark .script-done-cross::after {
+      background: linear-gradient(to bottom right, transparent 49.5%, rgba(255, 255, 255, 0.2) 49.5%, rgba(255, 255, 255, 0.2) 50.5%, transparent 50.5%);
+    }
+
+    .script-done-cross {
+      position: relative;
+    }
+    .script-done-cross::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom right, transparent 49.5%, rgba(24, 24, 27, 0.4) 49.5%, rgba(24, 24, 27, 0.4) 50.5%, transparent 50.5%);
+      pointer-events: none;
+      z-index: 20;
+    }
+    .dark .script-done-cross::after {
+      background: linear-gradient(to bottom right, transparent 49.5%, rgba(255, 255, 255, 0.2) 49.5%, rgba(255, 255, 255, 0.2) 50.5%, transparent 50.5%);
+    }
   </style>
 </head>
 <body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-zinc-950">
@@ -64,15 +100,15 @@
           </button>
 
           <!-- CUSTOM PROJECT DROPDOWN ROLETKA -->
-          <div class="relative" id="projectDropdownContainer">
+          <div class="relative min-w-0" id="projectDropdownContainer">
             <button
               onclick="toggleProjectDropdown(event)"
-              class="flex items-center gap-2.5 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/90 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm font-bold rounded-xl px-3.5 py-2 transition"
+              class="flex items-center gap-2.5 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/90 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm font-bold rounded-xl px-3.5 py-2 transition min-w-0"
             >
               <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
               </svg>
-              <span id="activeProjectLabel" class="truncate max-w-[160px] sm:max-w-[240px]">Nový projekt</span>
+              <span id="activeProjectLabel" class="truncate max-w-[100px] min-[400px]:max-w-[140px] sm:max-w-[240px]">Nový projekt</span>
               <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
               </svg>
@@ -124,7 +160,7 @@
         </div>
 
         <!-- Right Quick Actions -->
-        <div class="flex items-center gap-1.5">
+        <div class="flex items-center gap-1.5 shrink-0">
           <button
             id="autoBackupBadge"
             onclick="openSettingsMenu()"
@@ -251,21 +287,19 @@
   </main>
 
   <div id="scriptReaderOverlay" class="fixed inset-0 z-[60] bg-zinc-900/95 backdrop-blur-md hidden flex-col">
-    <div class="bg-zinc-900 border-b border-zinc-800 px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 text-zinc-100 shrink-0">
-      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-        <button onclick="closeScriptReader()" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-xs font-extrabold flex items-center gap-1.5 transition shrink-0">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-          <span>Späť do Call Sheetu</span>
+    <div class="bg-zinc-900 border-b border-zinc-800 px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3 text-zinc-100 shrink-0">
+      <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+        <button onclick="closeScriptReader()" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center transition shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
         </button>
-        <select id="scriptJumpSelect" onchange="scrollToScriptScene(this.value)" class="bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs font-bold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-amber-500 max-w-[170px] sm:max-w-xs truncate">
+        <select id="scriptJumpSelect" onchange="scrollToScriptScene(this.value)" class="bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs sm:text-sm font-bold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-amber-500 w-full max-w-[200px] sm:max-w-xs truncate">
         </select>
       </div>
       <div class="flex items-center gap-1.5 shrink-0">
-        <button onclick="adjustScriptFontSize(-1)" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-extrabold transition" title="Zmenšiť písmo">A-</button>
-        <button onclick="adjustScriptFontSize(1)" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-extrabold transition" title="Zväčšiť písmo">A+</button>
-        <button onclick="toggleScriptPaperTheme()" id="scriptPaperThemeBtn" class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-zinc-950 text-xs font-bold transition">Papier / Tmavý</button>
-        <button onclick="closeScriptReader()" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-rose-500 hover:text-white flex items-center justify-center text-zinc-400 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        <button onclick="adjustScriptFontSize(-1)" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm font-extrabold flex items-center justify-center transition" title="Zmenšiť písmo">A-</button>
+        <button onclick="adjustScriptFontSize(1)" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm font-extrabold flex items-center justify-center transition" title="Zväčšiť písmo">A+</button>
+        <button onclick="closeScriptReader()" class="hidden sm:flex w-9 h-9 rounded-full bg-zinc-800 hover:bg-rose-500 hover:text-white items-center justify-center text-zinc-400 transition ml-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
     </div>
@@ -1268,7 +1302,7 @@
       };
 
       const tabs = [
-        { id: 'HOME', label: 'Rozcestník', count: null },
+        { id: 'HOME', label: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`, count: null },
         { id: 'SCENES', label: 'Obrazy', count: `${doneScenes}/${counts.SCENES}` },
         { id: 'CAST', label: 'Účinkujúci', count: counts.CAST },
         { id: 'LOCATIONS', label: 'Lokácie', count: `${counts.MAIN_LOCS} (${counts.LOCATIONS})` },
@@ -2158,6 +2192,15 @@
       const scObj = sceneMap[sceneCode];
       if (!scObj) return;
 
+      const modalCont = document.getElementById('modalContainer');
+      if (modalCont) {
+        if (scObj.done) {
+          modalCont.classList.add('opacity-75', 'grayscale');
+        } else {
+          modalCont.classList.remove('opacity-75', 'grayscale');
+        }
+      }
+
       if (pushHistory) {
         modalStack.push({ type: 'SCENE', id: sceneCode });
         syncHistoryPush();
@@ -2178,16 +2221,17 @@
       const renderScriptPreview = () => {
         if (scripts.length === 0) return '';
         const scItem = scripts[0];
+        const doneClasses = scObj.done ? 'relative script-done-cross opacity-50 grayscale' : '';
         return `
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Scenár obrazu ${escapeHtml(sceneCode)}</span>
               <button onclick="openScriptReader('${escapeHtml(sceneCode)}')" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-extrabold flex items-center gap-1.5 shadow-2xs transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
-                <span>Celý scenár (Full Screen)</span>
+                <span>Celý scenár</span>
               </button>
             </div>
-            <div onclick="openScriptReader('${escapeHtml(sceneCode)}')" title="Kliknite pre otvorenie celého skrolovateľného scenára" class="cursor-pointer bg-[#fdfbf7] dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-xl p-4 sm:p-5 shadow-inner space-y-2.5 text-xs sm:text-sm hover:border-amber-500 transition" style="font-family: 'Courier New', Courier, monospace; line-height: 1.5;">
+            <div onclick="openScriptReader('${escapeHtml(sceneCode)}')" title="Kliknite pre otvorenie celého skrolovateľného scenára" class="cursor-pointer bg-[#fdfbf7] dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-xl p-4 sm:p-5 shadow-inner space-y-2.5 text-xs sm:text-sm hover:border-amber-500 transition ${doneClasses}" style="font-family: 'Courier New', Courier, monospace; line-height: 1.5;">
               ${formatScriptLinesHTML(scItem.details)}
             </div>
           </div>
@@ -2540,6 +2584,8 @@
     // 18. UTILITY ACTIONS
     // =========================================================================
     function showModalOverlay() {
+      const modalCont = document.getElementById('modalContainer');
+      if (modalCont) modalCont.classList.remove('opacity-75', 'grayscale');
       const ov = document.getElementById('modalOverlay');
       ov.classList.remove('hidden');
       ov.classList.add('flex');
@@ -2746,7 +2792,6 @@
     }
 
     let scriptFontSize = 16;
-    let scriptDarkPaper = false;
 
     function formatScriptLinesHTML(rawDetails) {
       const lines = String(rawDetails || '').split(/\s*\|\|\s*/);
@@ -2802,13 +2847,13 @@
         const isDone = scCode ? !!project.sceneDone?.[scCode] : false;
 
         return `
-          <div id="${escapeHtml(anchorId)}" data-scene-code="${escapeHtml(scCode)}" class="pb-8 mb-8 border-b border-zinc-300/80 dark:border-zinc-800 last:border-none">
+          <div id="${escapeHtml(anchorId)}" data-scene-code="${escapeHtml(scCode)}" class="relative pb-8 mb-8 border-b border-zinc-300/80 dark:border-zinc-800 last:border-none transition-all duration-500 ${isDone ? 'opacity-40 grayscale script-done-cross' : ''}">
             ${scCode ? `
-              <div class="flex items-center justify-between gap-2 mb-3 pb-1.5 border-b border-dashed border-zinc-300 dark:border-zinc-700 font-sans">
-                <button onclick="closeScriptReader(); openSceneModal('${escapeHtml(scCode)}')" class="text-xs font-extrabold px-2.5 py-1 rounded-lg bg-amber-500 text-zinc-950 hover:bg-amber-400 transition">
-                  Obraz ${escapeHtml(scCode)} • Zostava na pľaci
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-1.5 border-b border-dashed border-zinc-300 dark:border-zinc-700 font-sans">
+                <button onclick="closeScriptReader(); openSceneModal('${escapeHtml(scCode)}')" class="text-xs font-extrabold px-3 py-1.5 rounded-lg bg-amber-500 text-zinc-950 hover:bg-amber-400 transition flex-1 text-left whitespace-nowrap">
+                  Obraz ${escapeHtml(scCode)}
                 </button>
-                <button onclick="toggleSceneDoneInScript('${escapeHtml(scCode)}')" class="px-3 py-1 rounded-lg text-xs font-extrabold transition flex items-center gap-1 ${
+                <button onclick="toggleSceneDoneInScript('${escapeHtml(scCode)}')" class="px-3 py-1.5 rounded-lg text-xs font-extrabold transition flex items-center gap-1 whitespace-nowrap shrink-0 ${
                   isDone ? 'bg-emerald-500 text-zinc-950' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-emerald-500 hover:text-zinc-950'
                 }">
                   ${isDone ? `${ICONS.check}<span>Natočené</span>` : '<span>Označiť ako natočené</span>'}
@@ -2830,6 +2875,12 @@
       saveState();
       renderApp();
       renderScriptPaperBlocks();
+      if (modalStack.length > 0) {
+        const top = modalStack[modalStack.length - 1];
+        if (top.type === 'SCENE') openSceneModal(top.id, false);
+        else if (top.type === 'ITEM') openItemModal(top.id, false);
+        else if (top.type === 'MAIN_LOC') openMainLocationModal(top.id, false);
+      }
     }
 
     function scrollToScriptScene(scCode) {
@@ -2845,17 +2896,6 @@
       scriptFontSize = Math.min(26, Math.max(12, scriptFontSize + delta));
       const paper = document.getElementById('scriptPaperContainer');
       if (paper) paper.style.fontSize = `${scriptFontSize}px`;
-    }
-
-    function toggleScriptPaperTheme() {
-      scriptDarkPaper = !scriptDarkPaper;
-      const paper = document.getElementById('scriptPaperContainer');
-      if (!paper) return;
-      if (scriptDarkPaper) {
-        paper.className = 'max-w-3xl mx-auto bg-zinc-950 text-zinc-100 shadow-2xl rounded-xs sm:rounded-md px-5 sm:px-14 py-8 sm:py-14 border border-zinc-800 transition-colors duration-200';
-      } else {
-        paper.className = 'max-w-3xl mx-auto bg-[#fdfbf7] text-zinc-950 shadow-2xl rounded-xs sm:rounded-md px-5 sm:px-14 py-8 sm:py-14 border border-zinc-300 transition-colors duration-200';
-      }
     }
 
     function closeScriptReader() {
