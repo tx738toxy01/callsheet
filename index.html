@@ -1419,29 +1419,6 @@
                 </button>
               ` : ''}
             </div>
-
-            <!-- Dual Progress Bars -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 pt-5 border-t border-zinc-100 dark:border-zinc-800/80">
-              <div onclick="navigateTab('SCENES')" class="cursor-pointer p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950/60 hover:bg-amber-500/5 border border-zinc-200/60 dark:border-zinc-800/80 transition">
-                <div class="flex items-center justify-between text-xs font-bold mb-1.5">
-                  <span class="text-zinc-500 dark:text-zinc-400">Natočené obrazy (na pľaci)</span>
-                  <span class="text-amber-600 dark:text-amber-400">${doneScenes} z ${totalScenes} (${scenesPct}%)</span>
-                </div>
-                <div class="w-full h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                  <div class="h-full bg-amber-500 transition-all duration-300" style="width: ${scenesPct}%"></div>
-                </div>
-              </div>
-
-              <div onclick="navigateTab('PROPS')" class="cursor-pointer p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950/60 hover:bg-emerald-500/5 border border-zinc-200/60 dark:border-zinc-800/80 transition">
-                <div class="flex items-center justify-between text-xs font-bold mb-1.5">
-                  <span class="text-zinc-500 dark:text-zinc-400">Vybavené položky (príprava)</span>
-                  <span class="text-emerald-600 dark:text-emerald-400">${doneItems} z ${totalItems} (${itemsPct}%)</span>
-                </div>
-                <div class="w-full h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                  <div class="h-full bg-emerald-500 transition-all duration-300" style="width: ${itemsPct}%"></div>
-                </div>
-              </div>
-            </div>
           </div>
 
           <!-- 6 Bento Category Cards -->
