@@ -1,0 +1,2738 @@
+<!DOCTYPE html>
+<html lang="sk" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Produkčný Call Sheet</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    @keyframes sheetIn {
+      from { opacity: 0; transform: translateY(14px) scale(0.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .sheet-animate { animation: sheetIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    @keyframes dropdownIn {
+      from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .dropdown-animate { animation: dropdownIn 0.14s ease-out forwards; }
+  </style>
+</head>
+<body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-zinc-950">
+
+  <!-- Hidden File Inputs -->
+  <input type="file" id="csvFileInput" accept=".csv,.txt" class="hidden" onchange="handleFileUpload(event)" />
+  <input type="file" id="backupRestoreInput" accept=".json" class="hidden" onchange="handleFallbackBackupSelected(event)" />
+
+  <!-- STICKY HEADER -->
+  <header class="sticky top-0 z-30 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-b border-zinc-200/80 dark:border-zinc-800/80">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 pt-3 pb-2.5">
+      <!-- Top Row: Brand, Custom Project Dropdown, Quick Settings/Theme -->
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+          <button onclick="navigateTab('HOME')" class="flex items-center gap-2.5 text-left group focus:outline-none shrink-0">
+            <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-zinc-950 flex items-center justify-center shadow-xs group-hover:scale-105 transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
+              </svg>
+            </div>
+            <div class="hidden sm:block">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 block leading-none">Produkcia</span>
+              <span class="font-extrabold text-sm sm:text-base tracking-tight text-zinc-900 dark:text-white leading-tight">Call Sheet</span>
+            </div>
+          </button>
+
+          <!-- CUSTOM PROJECT DROPDOWN ROLETKA -->
+          <div class="relative" id="projectDropdownContainer">
+            <button
+              onclick="toggleProjectDropdown(event)"
+              class="flex items-center gap-2.5 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/90 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm font-bold rounded-xl px-3.5 py-2 transition"
+            >
+              <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+              </svg>
+              <span id="activeProjectLabel" class="truncate max-w-[160px] sm:max-w-[240px]">Nový projekt</span>
+              <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div
+              id="projectDropdownMenu"
+              class="hidden absolute left-0 mt-2 w-72 sm:w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden dropdown-animate"
+            >
+              <div class="px-3.5 py-2.5 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Výrobné listy (Časti)</span>
+                <span id="projectCountBadge" class="text-[11px] font-bold text-zinc-400">3</span>
+              </div>
+
+              <div id="projectDropdownList" class="max-h-60 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800/50">
+              </div>
+
+              <!-- Bottom Actions inside Dropdown: + Nahrať CSV & + Nová časť od základu -->
+              <div class="p-2 bg-zinc-50 dark:bg-zinc-950/70 border-t border-zinc-200/80 dark:border-zinc-800 space-y-1">
+                <button
+                  onclick="triggerCSVUploadFromDropdown()"
+                  class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-zinc-800 dark:text-zinc-200 hover:bg-amber-500 hover:text-zinc-950 transition group"
+                >
+                  <svg class="w-4 h-4 text-amber-500 group-hover:text-zinc-950 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                  </svg>
+                  <div class="text-left">
+                    <div>Nahrať CSV súbor</div>
+                    <div class="text-[10px] font-normal opacity-75">Importovať hotový výrobný list</div>
+                  </div>
+                </button>
+
+                <button
+                  onclick="openNewEpisodeWizard()"
+                  class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-zinc-800 dark:text-zinc-200 hover:bg-amber-500 hover:text-zinc-950 transition group"
+                >
+                  <svg class="w-4 h-4 text-emerald-500 group-hover:text-zinc-950 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  <div class="text-left">
+                    <div>Vytvoriť novú časť od základu</div>
+                    <div class="text-[10px] font-normal opacity-75">Prázdny Call Sheet pred písaním scenára</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Quick Actions -->
+        <div class="flex items-center gap-1.5">
+          <button
+            id="autoBackupBadge"
+            onclick="openSettingsMenu()"
+            class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold transition"
+            title="Automatická záloha je zapnutá"
+          >
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="hidden md:inline">Záloha zapnutá</span>
+          </button>
+
+          <button
+            onclick="openSettingsMenu()"
+            class="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 transition"
+            title="Nastavenia"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </button>
+
+          <button
+            onclick="toggleTheme()"
+            class="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 transition"
+            title="Prepnúť svetlý / tmavý režim"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364 6.364l-1.414-1.414M6.05 6.05L4.636 4.636m12.728 0l-1.414 1.414M6.05 17.95l-1.414 1.414M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Second Row: Search + Always Visible Funnel Icon + Dual Progress -->
+      <div class="mt-2.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div class="flex items-center gap-1.5 flex-1">
+          <div class="relative flex-1">
+            <svg class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"/>
+            </svg>
+            <input
+              type="text"
+              id="searchInput"
+              oninput="handleSearch(this.value)"
+              placeholder="Hľadať účinkujúceho, lokáciu, jedlo, obraz (napr. 12/1), rekvizitu..."
+              class="w-full pl-9 pr-8 py-2 text-xs sm:text-sm rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-transparent focus:border-amber-500 focus:bg-white dark:focus:bg-zinc-900 focus:outline-none transition"
+            />
+            <button id="clearSearchBtn" onclick="handleSearch('')" class="hidden absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- ALWAYS VISIBLE FUNNEL ICON NEXT TO SEARCH -->
+          <div class="relative" id="filterMenuContainer">
+            <button
+              id="filterToggleBtn"
+              onclick="toggleFilterPopover(event)"
+              class="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 transition relative flex items-center gap-1.5"
+              title="Filtrovať vyhľadávanie podľa kategórií a častí"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+              </svg>
+              <span id="filterActiveDot" class="hidden w-2 h-2 rounded-full bg-amber-500 absolute top-1.5 right-1.5"></span>
+            </button>
+
+            <!-- Popover with Search Category Filter & Real Episode Names -->
+            <div
+              id="filterPopoverMenu"
+              class="hidden absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2.5 dropdown-animate space-y-3"
+            >
+              <div>
+                <div class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                  Kategórie hľadania
+                </div>
+                <div id="filterCategoryList" class="space-y-1 mt-1"></div>
+              </div>
+
+              <div id="filterEpisodeSection" class="hidden pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <div class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                  Filtrovať podľa časti
+                </div>
+                <div id="filterEpisodeList" class="space-y-1 mt-1"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dual Progress Indicators -->
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button onclick="navigateTab('SCENES')" class="flex-1 sm:flex-initial flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/70 dark:border-zinc-800 transition text-left" title="Natočené obrazy na pľaci">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              <span class="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Obrazy:</span>
+              <span id="scenesProgressText" class="text-xs font-extrabold text-zinc-900 dark:text-white">0/0 (0%)</span>
+            </div>
+            <div class="w-10 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden hidden sm:block">
+              <div id="scenesProgressBar" class="h-full bg-amber-500 transition-all duration-300" style="width:0%"></div>
+            </div>
+          </button>
+
+          <button onclick="navigateTab('PROPS')" class="flex-1 sm:flex-initial flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/70 dark:border-zinc-800 transition text-left" title="Vybavené položky v príprave">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span class="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Príprava:</span>
+              <span id="itemsProgressText" class="text-xs font-extrabold text-zinc-900 dark:text-white">0/0 (0%)</span>
+            </div>
+            <div class="w-10 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden hidden sm:block">
+              <div id="itemsProgressBar" class="h-full bg-emerald-500 transition-all duration-300" style="width:0%"></div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav id="navTabs" class="flex items-center gap-1 pt-2.5 overflow-x-auto no-scrollbar">
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6">
+    <div id="mainContent"></div>
+  </main>
+
+  <!-- MODAL SHEET OVERLAY -->
+  <div id="modalOverlay" class="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-xs hidden items-end sm:items-center justify-center p-0 sm:p-4" onclick="handleOverlayClick(event)">
+    <div id="modalContainer" class="bg-white dark:bg-zinc-900 border-t sm:border border-zinc-200 dark:border-zinc-800 rounded-t-3xl sm:rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden sheet-animate">
+      <!-- Modal Header -->
+      <div class="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <button id="modalBackBtn" onclick="goBackUI()" class="hidden px-2.5 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-xs font-bold transition shrink-0 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            <span>Späť</span>
+          </button>
+          <div id="modalTitleWrap" class="min-w-0"></div>
+        </div>
+        <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center text-zinc-500 dark:text-zinc-400 transition shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div id="modalBody" class="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1 text-sm">
+      </div>
+
+      <!-- Modal Footer -->
+      <div id="modalFooter" class="px-5 py-3.5 border-t border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/70 dark:bg-zinc-900/60 flex items-center justify-between gap-2">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. SVG ICON SYSTEM (ZERO EMOJIS ANYWHERE)
+    // =========================================================================
+    const ICONS = {
+      scenes: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>`,
+      scenesSm: `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>`,
+      cast: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`,
+      locations: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`,
+      parking: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>`,
+      gastro: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>`,
+      costumes: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6a2 2 0 100-4 2 2 0 000 4zm0 0v3m0 0L4 16a2 2 0 001.3 3.5h13.4A2 2 0 0020 16l-8-7z"/></svg>`,
+      hanger: `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6a2 2 0 100-4 2 2 0 000 4zm0 0v3m0 0L4 16a2 2 0 001.3 3.5h13.4A2 2 0 0020 16l-8-7z"/></svg>`,
+      props: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>`,
+      alert: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`,
+      check: `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`,
+      chevronRight: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>`,
+      chevronDown: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`,
+      plus: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>`,
+      edit: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`,
+      map: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>`,
+      download: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>`,
+      cloud: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>`,
+      trash: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>`
+    };
+
+    // =========================================================================
+    // 2. DEFAULT DATASETS & APP STATE
+    // =========================================================================
+    const DEFAULT_DATASETS = {
+      "Nový projekt": "KATEGÓRIA;POLOŽKA / NÁZOV;OBRAZY (SCÉNY);TYP / LOKALITA;DETAILY A PRODUKČNÉ POZNÁMKY\n"
+    };
+    const STORAGE_KEY = 'production_callsheet_app_v1';
+
+    let appState = {
+      activeProject: 'Nový projekt',
+      activeTab: 'HOME', // HOME, SCENES, CAST, LOCATIONS, GASTRO, COSTUMES, PROPS, ALERTS
+      locationsSubView: 'MAIN', // 'MAIN' vs 'ALL'
+      episodeFilter: 'ALL',
+      searchCategoryFilter: 'ALL', // ALL, CAST, LOCATIONS, GASTRO, COSTUMES, PROPS
+      searchQuery: '',
+      lastBackupTime: null,
+      projects: {}
+    };
+
+    let backupFileHandle = null;
+    let autoBackupEnabled = false;
+    let backupFileName = '';
+
+    let modalStack = [];
+    let isHandlingPopState = false;
+
+    // =========================================================================
+    // 3. BROWSER HISTORY API (CHROME BACK BUTTON SUPPORT)
+    // =========================================================================
+    function syncHistoryPush() {
+      if (isHandlingPopState) return;
+      const stateSnapshot = {
+        activeProject: appState.activeProject,
+        activeTab: appState.activeTab,
+        locationsSubView: appState.locationsSubView,
+        modalStack: JSON.parse(JSON.stringify(modalStack))
+      };
+      try {
+        history.pushState(stateSnapshot, '');
+      } catch (e) {}
+    }
+
+    window.addEventListener('popstate', (event) => {
+      isHandlingPopState = true;
+      if (event.state) {
+        const s = event.state;
+        appState.activeProject = s.activeProject || appState.activeProject;
+        appState.activeTab = s.activeTab || 'HOME';
+        appState.locationsSubView = s.locationsSubView || 'MAIN';
+        modalStack = s.modalStack || [];
+
+        renderApp();
+
+        if (modalStack.length > 0) {
+          const top = modalStack[modalStack.length - 1];
+          if (top.type === 'ITEM') openItemModal(top.id, false);
+          else if (top.type === 'SCENE') openSceneModal(top.id, false);
+          else if (top.type === 'MAIN_LOC') openMainLocationModal(top.id, false);
+        } else {
+          closeModalUIOnly();
+        }
+      } else {
+        if (modalStack.length > 0) {
+          modalStack.pop();
+          if (modalStack.length > 0) {
+            const top = modalStack[modalStack.length - 1];
+            if (top.type === 'ITEM') openItemModal(top.id, false);
+            else if (top.type === 'SCENE') openSceneModal(top.id, false);
+            else if (top.type === 'MAIN_LOC') openMainLocationModal(top.id, false);
+          } else {
+            closeModalUIOnly();
+          }
+        } else if (appState.activeTab !== 'HOME') {
+          appState.activeTab = 'HOME';
+          renderApp();
+        }
+      }
+      isHandlingPopState = false;
+    });
+
+    function goBackUI() {
+      if (history.state && modalStack.length > 1) {
+        history.back();
+      } else if (modalStack.length > 1) {
+        modalStack.pop();
+        const top = modalStack[modalStack.length - 1];
+        if (top.type === 'ITEM') openItemModal(top.id, false);
+        else if (top.type === 'SCENE') openSceneModal(top.id, false);
+        else if (top.type === 'MAIN_LOC') openMainLocationModal(top.id, false);
+      } else {
+        closeModal();
+      }
+    }
+
+    // =========================================================================
+    // 4. CSV PARSER & CLEAN CATEGORY SEPARATION
+    // =========================================================================
+    function parseCSVLine(line) {
+      const result = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === ';' && !inQuotes) {
+          result.push(cur.trim());
+          cur = '';
+        } else {
+          cur += ch;
+        }
+      }
+      result.push(cur.trim());
+      return result;
+    }
+
+    function normalizeCategoryAndGroup(rawCat, title = '', details = '') {
+      const c = (rawCat || '').toUpperCase();
+      const t = (title || '').toLowerCase();
+
+      if (c.includes('ÚČINKUJÚCI') || c.includes('UCINKUJUCI') || c.includes('HERCI') || c.includes('MODERÁTOR')) {
+        return { group: 'CAST', cleanCategory: 'ÚČINKUJÚCI' };
+      }
+      if (c.includes('LOKÁCIA') || c.includes('LOKACIA') || c.includes('MIESTO')) {
+        return { group: 'LOCATIONS', cleanCategory: rawCat };
+      }
+      if (c.includes('GASTRO') || c.includes('JEDLO') || c.includes('MENU') || c.includes('KUCHYŇA')) {
+        return { group: 'GASTRO', cleanCategory: rawCat };
+      }
+
+      if (c === 'KOSTÝMY' || c === 'KOSTYMY') {
+        return { group: 'COSTUMES', cleanCategory: 'KOSTÝMY' };
+      }
+
+      if (c.includes('KOSTÝM') || c.includes('KOSTYM') || c.includes('REKVIZIT')) {
+        const isPureCostumeRow = /^(kostým|kostýmy:|dámsky romantický kostým|kroj|maska|obliekanie)/i.test(t.trim());
+        if (isPureCostumeRow) {
+          return { group: 'COSTUMES', cleanCategory: 'KOSTÝMY' };
+        }
+        const cleanedCat = rawCat.replace(/\s*&\s*KOSTÝMY/gi, '').trim() || 'REKVIZITY';
+        return { group: 'PROPS', cleanCategory: cleanedCat };
+      }
+
+      return { group: 'PROPS', cleanCategory: rawCat || 'REKVIZITY' };
+    }
+
+    function inferMainLocation(title, locOrEp, projectName) {
+      const t = (title || '').trim();
+      const l = (locOrEp || '').trim();
+
+      if (t.includes('–') || t.includes('-')) {
+        const prefix = t.split(/[–\-]/)[0].trim();
+        if (/^kaštieľ|^hrad|^park/i.test(prefix)) {
+          return `Areál: ${projectName}`;
+        }
+      }
+
+      if (/hradná veža|^kuchyňa$/i.test(t) || /int\.\s*kaštieľ|int\.\s*pivnice/i.test(l)) {
+        return `Areál: ${projectName}`;
+      }
+
+      if (/pole pri starej strelnici/i.test(t)) return 'Exteriér mimo areálu: Pole pri strelnici';
+      if (/babičkina chyža/i.test(t)) return 'Presun v meste: SOŠ Babičkina chyža';
+      if (/fašiangový sprievod/i.test(t)) return 'Exteriér mesto: Uličky Kežmarku';
+      if (/^les\b/i.test(t)) return 'Exteriér mimo areálu: Les';
+      if (/vinohrady/i.test(t)) return 'Exteriér mimo areálu: Vinohrady';
+
+      if (/mimo hradu|mesto|les|vinohrady|pole/i.test(l)) {
+        return `Samostatný presun: ${t.split('(')[0].trim()}`;
+      }
+      return `Areál: ${projectName}`;
+    }
+
+    function detectSpecialTags(rawCat, title, details) {
+      const combined = `${rawCat} ${title} ${details}`;
+      const tags = [];
+      if (/POZOR|overiť|meno dodám|prosím,\s*zohnať|pevný termín|iba polodetaily/i.test(combined)) {
+        tags.push({ type: 'ALERT', label: 'Pozor' });
+      }
+      const gpsMatch = combined.match(/(\d{1,2}°\d{1,2}'[\d.]+"[NS]\s+\d{1,2}°\d{1,2}'[\d.]+"[EW])/i);
+      if (gpsMatch) {
+        tags.push({ type: 'GPS', label: 'GPS', gps: gpsMatch[1] });
+      }
+      return tags;
+    }
+
+    function parseCSVToProject(projectName, csvText) {
+      const cleanText = csvText.replace(/^\uFEFF/, '').trim();
+      const lines = cleanText.split(/\r?\n/).filter(l => l.trim().length > 0);
+      if (lines.length === 0) return { name: projectName, col4Header: 'TYP / LOKALITA', items: [], sceneDone: {} };
+
+      const headers = parseCSVLine(lines[0]);
+      const col4Header = headers[3] || 'TYP / LOKALITA';
+
+      const items = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCSVLine(lines[i]);
+        if (cols.length < 2) continue;
+        const rawCat = cols[0] || 'INÉ';
+        const title = cols[1] || '';
+        const scenesRaw = cols[2] || '';
+        const locationOrEp = cols[3] || '';
+        const details = cols[4] || '';
+        const { group, cleanCategory } = normalizeCategoryAndGroup(rawCat, title, details);
+
+        items.push({
+          id: `${projectName.replace(/\s+/g, '_')}_item_${i}_${Math.random().toString(36).slice(2,6)}`,
+          category: cleanCategory,
+          group,
+          mainLocation: group === 'LOCATIONS' ? inferMainLocation(title, locationOrEp, projectName) : '',
+          title,
+          scenesRaw,
+          locationOrEp,
+          details,
+          userNotes: '',
+          checked: false
+        });
+      }
+
+      return { name: projectName, col4Header, items, sceneDone: {} };
+    }
+
+    // =========================================================================
+    // 5. SCENE PARSER & STRICT COSTUME PARSER (NO DESIGNER / NO FAKE COSTUMES!)
+    // =========================================================================
+    function expandSceneTokens(str) {
+      const explicit = new Set();
+      if (!str) return explicit;
+
+      const rangeRegex1 = /(\d+)\/(\d+)\s*[–\-]\s*(\d+)\/(\d+)/g;
+      let m;
+      while ((m = rangeRegex1.exec(str)) !== null) {
+        const start = parseInt(m[1], 10), ep1 = m[2], end = parseInt(m[3], 10), ep2 = m[4];
+        if (ep1 === ep2 && end >= start && (end - start) <= 60) {
+          for (let n = start; n <= end; n++) explicit.add(`${n}/${ep1}`);
+        }
+      }
+
+      const rangeRegex2 = /(\d+)\s*[–\-]\s*(\d+)\/(\d+)/g;
+      while ((m = rangeRegex2.exec(str)) !== null) {
+        const start = parseInt(m[1], 10), end = parseInt(m[2], 10), ep = m[3];
+        if (end >= start && (end - start) <= 60) {
+          for (let n = start; n <= end; n++) explicit.add(`${n}/${ep}`);
+        }
+      }
+
+      const slashRegex = /(\d+\/\d+(?:\s+(?:INT\.|EXT\.))?)/gi;
+      while ((m = slashRegex.exec(str)) !== null) {
+        explicit.add(m[1].replace(/\s+/g, ' ').trim());
+      }
+
+      const dotRegex = /(?:^|[,;\s])(\d{1,2})\.(?=$|[,;\s)])/g;
+      while ((m = dotRegex.exec(str)) !== null) {
+        explicit.add(`${m[1]}.`);
+      }
+
+      return explicit;
+    }
+
+    // Strictly parses ONLY actual worn costumes (never matches "Kostýmová výtvarníčka" or "Výklad o kroji")
+    function parseStructuredCostumes(detailsText, personTitle = '') {
+      if (!detailsText) return { costumes: [], extraNote: '' };
+
+      // 1. Exclude costume designer or people whose role description just mentions costumes/looms
+      if (/kostýmová výtvarníčka|jarjabková|výklad o kroji/i.test(detailsText + ' ' + personTitle)) {
+        return { costumes: [], extraNote: '' };
+      }
+
+      const costumes = [];
+      // 2. Check for explicit numbered costumes: "1) Civil vo výťahu (2/1, 26/1), 2) ..."
+      const regex = /(\d+)\)\s*([^(),.;]+?)(?:\s*\(([^)]+)\))?(?=[,.;]|\s+\d+\)|$)/g;
+      let m;
+      while ((m = regex.exec(detailsText)) !== null) {
+        const num = m[1].trim();
+        const name = m[2].trim().replace(/^[,;\s]+|[,;\s]+$/g, '');
+        const scenesRaw = (m[3] || '').trim();
+        const discrete = Array.from(expandSceneTokens(scenesRaw));
+        costumes.push({ num, name, scenesRaw, discrete });
+      }
+
+      // 3. Check for unnumbered explicit costume changes with "(od ...)" e.g. in Betliar:
+      // "Romantický dámsky kostým 19. storočia (od obr. 2/11), poľovnícka pokrývka hlavy (od 19/11)"
+      if (costumes.length === 0 && /\(\s*od\s+(?:obr\.\s*)?\d+/i.test(detailsText)) {
+        const parts = detailsText.split(/,(?![^(]*\))/);
+        let idx = 1;
+        parts.forEach(p => {
+          const clean = p.trim();
+          if (!clean) return;
+          const parenMatch = clean.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+          if (parenMatch) {
+            costumes.push({
+              num: idx++,
+              name: parenMatch[1].trim(),
+              scenesRaw: parenMatch[2].trim(),
+              discrete: Array.from(expandSceneTokens(parenMatch[2]))
+            });
+          } else {
+            costumes.push({ num: idx++, name: clean, scenesRaw: '', discrete: [] });
+          }
+        });
+      }
+
+      let extraNote = '';
+      if (costumes.length > 0) {
+        const dotParts = detailsText.split(/\.\s+/);
+        if (dotParts.length > 1) {
+          extraNote = dotParts.slice(1).join('. ').trim();
+        }
+      }
+
+      return { costumes, extraNote };
+    }
+
+    // Calculates exact total number of individual costumes in the episode (e.g. Maca 3 + Tibor 3 = 6 kostýmov)
+    function getEpisodeCostumesSummary(project, episodeFilter) {
+      const castItems = project.items.filter(i => i.group === 'CAST' && itemMatchesEpisodeFilter(i, episodeFilter));
+      const peopleWithCostumes = [];
+      let totalCostumeCount = 0;
+
+      castItems.forEach(person => {
+        const { costumes, extraNote } = parseStructuredCostumes(person.details, person.title);
+        if (costumes.length > 0) {
+          peopleWithCostumes.push({ person, costumes, extraNote });
+          totalCostumeCount += costumes.length;
+        }
+      });
+
+      // Also include any custom standalone costume items added by the user via "+ Pridať kostým"
+      const customCostumeItems = project.items.filter(i =>
+        i.group === 'COSTUMES' &&
+        !/^kostýmy:|^kostým kataríny|^dámsky romantický/i.test(i.title.trim()) &&
+        itemMatchesEpisodeFilter(i, episodeFilter)
+      );
+
+      totalCostumeCount += customCostumeItems.length;
+
+      return { peopleWithCostumes, customCostumeItems, totalCostumeCount };
+    }
+
+    function buildSceneCatalog(project) {
+      const allUniverse = new Set();
+      project.items.forEach(item => {
+        expandSceneTokens(item.scenesRaw).forEach(s => allUniverse.add(s));
+      });
+
+      const sortedScenes = Array.from(allUniverse).sort((a, b) => {
+        const parseToken = (t) => {
+          const mSlash = t.match(/^(\d+)\/(\d+)(.*)$/);
+          if (mSlash) return { num: parseInt(mSlash[1], 10), ep: parseInt(mSlash[2], 10), extra: mSlash[3] || '' };
+          const mDot = t.match(/^(\d+)\.$/);
+          if (mDot) return { num: parseInt(mDot[1], 10), ep: 11, extra: '' };
+          return { num: 999, ep: 999, extra: t };
+        };
+        const pa = parseToken(a), pb = parseToken(b);
+        if (pa.ep !== pb.ep) return pb.ep - pa.ep;
+        if (pa.num !== pb.num) return pa.num - pb.num;
+        return pa.extra.localeCompare(pb.extra);
+      });
+
+      const itemScenesMap = {};
+      project.items.forEach(item => {
+        const raw = item.scenesRaw || '';
+        if (/všetky\s+okrem/i.test(raw)) {
+          const excluded = expandSceneTokens(raw);
+          itemScenesMap[item.id] = sortedScenes.filter(sc => {
+            const base = sc.replace(/\s+(INT\.|EXT\.)$/i, '');
+            return !excluded.has(sc) && !excluded.has(base);
+          });
+        } else {
+          const inc = expandSceneTokens(raw);
+          itemScenesMap[item.id] = sortedScenes.filter(sc => {
+            const base = sc.replace(/\s+(INT\.|EXT\.)$/i, '');
+            return inc.has(sc) || inc.has(base);
+          });
+        }
+      });
+
+      const sceneMap = {};
+      sortedScenes.forEach(sc => {
+        sceneMap[sc] = { code: sc, done: !!project.sceneDone?.[sc], items: [] };
+      });
+
+      project.items.forEach(item => {
+        (itemScenesMap[item.id] || []).forEach(sc => {
+          if (sceneMap[sc]) sceneMap[sc].items.push(item);
+        });
+      });
+
+      return { sortedScenes, sceneMap, itemScenesMap };
+    }
+
+    function buildMainLocationsCatalog(project, locationItems, itemScenesMap) {
+      const groups = {};
+      locationItems.forEach(loc => {
+        const mainName = loc.mainLocation || inferMainLocation(loc.title, loc.locationOrEp, project.name);
+        if (!groups[mainName]) {
+          groups[mainName] = {
+            name: mainName,
+            subLocations: [],
+            scenesSet: new Set()
+          };
+        }
+        groups[mainName].subLocations.push(loc);
+        (itemScenesMap[loc.id] || []).forEach(sc => groups[mainName].scenesSet.add(sc));
+      });
+      return Object.values(groups);
+    }
+
+    // =========================================================================
+    // 6. FUNNEL FILTER POPOVER
+    // =========================================================================
+    function detectNamedEpisodes(project) {
+      const isCol4Episode = (project.col4Header || '').toUpperCase().includes('EPIZ');
+      if (!isCol4Episode) return null;
+
+      const labels = new Set();
+      project.items.forEach(it => {
+        (it.locationOrEp || '').split('+').forEach(part => {
+          const clean = part.replace(/\(.*?\)/g, '').trim();
+          if (clean && clean.length > 1) labels.add(clean);
+        });
+      });
+
+      return labels.size > 1 ? Array.from(labels) : null;
+    }
+
+    function itemMatchesEpisodeFilter(item, filterVal) {
+      if (!filterVal || filterVal === 'ALL') return true;
+      return (item.locationOrEp || '').toLowerCase().includes(filterVal.toLowerCase());
+    }
+
+    function toggleFilterPopover(e) {
+      e.stopPropagation();
+      const pop = document.getElementById('filterPopoverMenu');
+      pop.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      const fCont = document.getElementById('filterMenuContainer');
+      const fPop = document.getElementById('filterPopoverMenu');
+      if (fCont && fPop && !fCont.contains(e.target)) {
+        fPop.classList.add('hidden');
+      }
+      const pCont = document.getElementById('projectDropdownContainer');
+      const pMenu = document.getElementById('projectDropdownMenu');
+      if (pCont && pMenu && !pCont.contains(e.target)) {
+        pMenu.classList.add('hidden');
+      }
+    });
+
+    // =========================================================================
+    // 7. LOCAL STORAGE & SMART AUTO-BACKUP (DETECTS OLD BACKUP -> YES/NO)
+    // =========================================================================
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.projects && Object.keys(parsed.projects).length > 0) {
+            appState = { ...appState, ...parsed };
+            Object.values(appState.projects).forEach(proj => {
+              proj.items.forEach(it => {
+                const { group, cleanCategory } = normalizeCategoryAndGroup(it.category, it.title, it.details);
+                it.group = group;
+                it.category = cleanCategory;
+                if (it.group === 'LOCATIONS' && !it.mainLocation) {
+                  it.mainLocation = inferMainLocation(it.title, it.locationOrEp, proj.name);
+                }
+              });
+            });
+            return;
+          }
+        }
+      } catch (e) {}
+
+      appState.projects = {};
+      for (const [name, csv] of Object.entries(DEFAULT_DATASETS)) {
+        appState.projects[name] = parseCSVToProject(name, csv);
+      }
+      appState.activeProject = Object.keys(appState.projects)[0];
+      saveState();
+    }
+
+    function getFullBackupPayload() {
+      return JSON.stringify({
+        version: 6,
+        exportedAt: new Date().toISOString(),
+        activeProject: appState.activeProject,
+        projects: appState.projects
+      }, null, 2);
+    }
+
+    async function writeToAutoBackupFile() {
+      if (!autoBackupEnabled || !backupFileHandle) return;
+      try {
+        const writable = await backupFileHandle.createWritable();
+        await writable.write(getFullBackupPayload());
+        await writable.close();
+        appState.lastBackupTime = new Date().toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        updateAutoBackupBadgeUI();
+      } catch (err) {
+        console.warn('Auto-backup write error:', err);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          activeProject: appState.activeProject,
+          activeTab: appState.activeTab,
+          locationsSubView: appState.locationsSubView,
+          lastBackupTime: appState.lastBackupTime,
+          projects: appState.projects
+        }));
+      } catch (e) {}
+
+      if (autoBackupEnabled && backupFileHandle) {
+        writeToAutoBackupFile();
+      }
+    }
+
+    function updateAutoBackupBadgeUI() {
+      const badge = document.getElementById('autoBackupBadge');
+      if (!badge) return;
+      if (autoBackupEnabled && backupFileHandle) {
+        badge.classList.remove('hidden');
+        badge.classList.add('inline-flex');
+      } else {
+        badge.classList.add('hidden');
+        badge.classList.remove('inline-flex');
+      }
+    }
+
+    // Single slider behavior:
+    // 1. User toggles slider ON -> picks file location (e.g. on Google Drive).
+    // 2. If the selected file already contains a backup, immediately ask: "Chcete obnoviť dáta zo zálohy? (Áno / Nie)"
+    //    - If YES (OK): restores data from that file and continues auto-saving to it.
+    //    - If NO (Cancel): overwrites that file with current app data and continues auto-saving to it.
+    async function toggleAutoBackupSwitch(checkboxEl) {
+      if (checkboxEl.checked) {
+        if ('showSaveFilePicker' in window) {
+          try {
+            const handle = await window.showSaveFilePicker({
+              suggestedName: 'CallSheet_Zaloha.json',
+              types: [{
+                description: 'Záloha Call Sheetu (.json)',
+                accept: { 'application/json': ['.json'] }
+              }]
+            });
+
+            backupFileHandle = handle;
+            backupFileName = handle.name;
+            autoBackupEnabled = true;
+
+            // Check if the chosen file already exists and has valid backup data inside!
+            let existingBackup = null;
+            try {
+              const existingFile = await handle.getFile();
+              if (existingFile && existingFile.size > 10) {
+                const text = await existingFile.text();
+                const parsed = JSON.parse(text);
+                if (parsed && parsed.projects && Object.keys(parsed.projects).length > 0) {
+                  existingBackup = parsed;
+                }
+              }
+            } catch (readErr) {
+              // File is brand new or empty
+            }
+
+            if (existingBackup) {
+              const count = Object.keys(existingBackup.projects).length;
+              const wantRestore = confirm(
+                `Na tomto mieste sa našla existujúca záloha (${count} častí).\n\nChcete obnoviť dáta z tejto zálohy?\n• OK (Áno) = Načítať dáta zo zálohy\n• Zrušiť (Nie) = Prepísať zálohu aktuálnymi dátami v apke`
+              );
+              if (wantRestore) {
+                appState.projects = existingBackup.projects;
+                appState.activeProject = existingBackup.activeProject || Object.keys(existingBackup.projects)[0];
+                appState.activeTab = 'HOME';
+                appState.episodeFilter = 'ALL';
+                appState.lastBackupTime = new Date().toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' });
+                saveState();
+                renderApp();
+              } else {
+                await writeToAutoBackupFile();
+              }
+            } else {
+              await writeToAutoBackupFile();
+            }
+
+            updateAutoBackupBadgeUI();
+            openSettingsMenu();
+          } catch (err) {
+            checkboxEl.checked = false;
+            autoBackupEnabled = false;
+          }
+        } else {
+          // Fallback for mobile browsers without File System Access API
+          const hasExisting = confirm('Máte už uložený záložný súbor a chcete z neho obnoviť dáta?\n\n• OK (Áno) = Vybrať existujúcu zálohu a obnoviť\n• Zrušiť (Nie) = Vytvoriť novú zálohu');
+          if (hasExisting) {
+            document.getElementById('backupRestoreInput').click();
+            checkboxEl.checked = false;
+          } else {
+            const payload = getFullBackupPayload();
+            const blob = new Blob([payload], { type: 'application/json;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'CallSheet_Zaloha.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            appState.lastBackupTime = new Date().toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' });
+            saveState();
+            openSettingsMenu();
+          }
+        }
+      } else {
+        autoBackupEnabled = false;
+        backupFileHandle = null;
+        backupFileName = '';
+        updateAutoBackupBadgeUI();
+        openSettingsMenu();
+      }
+    }
+
+    function handleFallbackBackupSelected(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed && parsed.projects && Object.keys(parsed.projects).length > 0) {
+            if (confirm(`Nájdená záloha (${Object.keys(parsed.projects).length} častí). Chcete obnoviť dáta zo zálohy?`)) {
+              appState.projects = parsed.projects;
+              appState.activeProject = parsed.activeProject || Object.keys(parsed.projects)[0];
+              appState.activeTab = 'HOME';
+              appState.episodeFilter = 'ALL';
+              saveState();
+              closeModal();
+              syncHistoryPush();
+              renderApp();
+            }
+          } else {
+            alert('Vybraný súbor neobsahuje platnú zálohu.');
+          }
+        } catch (err) {
+          alert('Chyba pri čítaní záložného súboru.');
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
+      event.target.value = '';
+    }
+
+    // =========================================================================
+    // 8. RENAME EPISODE DIRECTLY IN ROZCESTNÍK
+    // =========================================================================
+    function startInlineRenameProject() {
+      const project = getCurrentProject();
+      const wrap = document.getElementById('inlineProjectTitleWrap');
+      if (!wrap) return;
+
+      wrap.innerHTML = `
+        <div class="flex items-center gap-2 mt-1">
+          <input
+            id="inlineProjectNameInput"
+            type="text"
+            value="${escapeHtml(project.name)}"
+            onkeydown="if(event.key==='Enter') saveInlineRenameProject(); if(event.key==='Escape') renderApp();"
+            class="text-xl sm:text-2xl font-extrabold tracking-tight bg-zinc-100 dark:bg-zinc-800 border border-amber-500 rounded-xl px-3 py-1 text-zinc-900 dark:text-white focus:outline-none w-full max-w-md"
+          />
+          <button onclick="saveInlineRenameProject()" class="px-3.5 py-2 rounded-xl bg-amber-500 text-zinc-950 text-xs font-extrabold shrink-0">
+            Uložiť
+          </button>
+          <button onclick="renderApp()" class="px-3 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-xs font-bold shrink-0">
+            Zrušiť
+          </button>
+        </div>
+      `;
+      const inp = document.getElementById('inlineProjectNameInput');
+      if (inp) {
+        inp.focus();
+        inp.select();
+      }
+    }
+
+    function saveInlineRenameProject() {
+      const inp = document.getElementById('inlineProjectNameInput');
+      if (!inp) return;
+      const newName = inp.value.trim();
+      const project = getCurrentProject();
+      const oldName = project.name;
+
+      if (!newName || newName === oldName) {
+        renderApp();
+        return;
+      }
+
+      if (appState.projects[newName]) {
+        alert('Časť s týmto názvom už existuje.');
+        return;
+      }
+
+      const oldShort = oldName.replace(/^(Kaštieľ|Hrad)\s+/i, '').trim();
+      project.items.forEach(it => {
+        if (it.locationOrEp) {
+          it.locationOrEp = it.locationOrEp.split(oldName).join(newName);
+          if (oldShort && oldShort.length > 2 && it.locationOrEp === oldShort) {
+            it.locationOrEp = newName;
+          }
+        }
+        if (it.mainLocation) {
+          it.mainLocation = it.mainLocation.split(oldName).join(newName);
+          if (oldShort && oldShort.length > 2) {
+            it.mainLocation = it.mainLocation.split(oldShort).join(newName);
+          }
+        }
+      });
+
+      const updatedProjects = {};
+      Object.keys(appState.projects).forEach(k => {
+        if (k === oldName) {
+          project.name = newName;
+          updatedProjects[newName] = project;
+        } else {
+          updatedProjects[k] = appState.projects[k];
+        }
+      });
+
+      appState.projects = updatedProjects;
+      appState.activeProject = newName;
+      saveState();
+      syncHistoryPush();
+      renderApp();
+    }
+
+    // =========================================================================
+    // 9. PROJECT DROPDOWN ROLETKA
+    // =========================================================================
+    function toggleProjectDropdown(e) {
+      e.stopPropagation();
+      document.getElementById('projectDropdownMenu').classList.toggle('hidden');
+    }
+
+    function renderProjectDropdown() {
+      const project = getCurrentProject();
+      const names = Object.keys(appState.projects);
+      document.getElementById('activeProjectLabel').textContent = project.name;
+      document.getElementById('projectCountBadge').textContent = `${names.length}`;
+
+      const listEl = document.getElementById('projectDropdownList');
+      listEl.innerHTML = names.map(name => {
+        const p = appState.projects[name];
+        const isCurrent = name === project.name;
+        return `
+          <button
+            onclick="selectProjectFromDropdown('${escapeHtml(name)}')"
+            class="w-full px-3.5 py-2.5 text-left flex items-center justify-between gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/70 transition ${
+              isCurrent ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 font-extrabold' : 'text-zinc-700 dark:text-zinc-200 font-semibold'
+            }"
+          >
+            <div class="min-w-0">
+              <div class="text-xs sm:text-sm truncate">${escapeHtml(name)}</div>
+              <div class="text-[10px] text-zinc-400 font-normal">${p.items.length} položiek</div>
+            </div>
+            ${isCurrent ? `<span class="text-amber-500 shrink-0">${ICONS.check}</span>` : ''}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectProjectFromDropdown(name) {
+      document.getElementById('projectDropdownMenu').classList.add('hidden');
+      appState.activeProject = name;
+      appState.episodeFilter = 'ALL';
+      appState.searchCategoryFilter = 'ALL';
+      saveState();
+      syncHistoryPush();
+      renderApp();
+    }
+
+    function triggerCSVUploadFromDropdown() {
+      document.getElementById('projectDropdownMenu').classList.add('hidden');
+      document.getElementById('csvFileInput').click();
+    }
+
+    // =========================================================================
+    // 10. MAIN RENDERING ENGINE
+    // =========================================================================
+    function getCurrentProject() {
+      return appState.projects[appState.activeProject] || Object.values(appState.projects)[0];
+    }
+
+    function navigateTab(tabId) {
+      appState.activeTab = tabId;
+      if (tabId === 'HOME') {
+        appState.searchQuery = '';
+        appState.searchCategoryFilter = 'ALL';
+        document.getElementById('searchInput').value = '';
+        document.getElementById('clearSearchBtn').classList.add('hidden');
+      }
+      saveState();
+      syncHistoryPush();
+      renderApp();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderApp() {
+      const project = getCurrentProject();
+      if (!project) return;
+
+      renderProjectDropdown();
+      updateAutoBackupBadgeUI();
+
+      // Funnel Popover: 1) Search Categories + 2) Real Named Episodes
+      const catOptions = [
+        { id: 'ALL', label: 'Všetky kategórie' },
+        { id: 'CAST', label: 'Iba Účinkujúci' },
+        { id: 'LOCATIONS', label: 'Iba Lokácie' },
+        { id: 'GASTRO', label: 'Iba Gastro' },
+        { id: 'COSTUMES', label: 'Iba Kostýmy' },
+        { id: 'PROPS', label: 'Iba Rekvizity' }
+      ];
+
+      document.getElementById('filterCategoryList').innerHTML = catOptions.map(c => {
+        const active = appState.searchCategoryFilter === c.id;
+        return `
+          <button
+            onclick="setSearchCategoryFilter('${c.id}')"
+            class="w-full px-3 py-1.5 rounded-xl text-xs font-bold text-left flex items-center justify-between transition ${
+              active ? 'bg-amber-500 text-zinc-950' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+            }"
+          >
+            <span>${c.label}</span>
+            ${active ? ICONS.check : ''}
+          </button>
+        `;
+      }).join('');
+
+      const namedEps = detectNamedEpisodes(project);
+      const epSection = document.getElementById('filterEpisodeSection');
+      const filterList = document.getElementById('filterEpisodeList');
+      const filterDot = document.getElementById('filterActiveDot');
+
+      if (namedEps && namedEps.length > 1) {
+        epSection.classList.remove('hidden');
+        filterList.innerHTML = ['ALL', ...namedEps].map(opt => {
+          const active = appState.episodeFilter === opt;
+          const label = opt === 'ALL' ? 'Všetky časti' : opt;
+          return `
+            <button
+              onclick="setEpisodeFilter('${escapeHtml(opt)}')"
+              class="w-full px-3 py-1.5 rounded-xl text-xs font-bold text-left flex items-center justify-between transition ${
+                active ? 'bg-indigo-600 text-white' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+              }"
+            >
+              <span>${escapeHtml(label)}</span>
+              ${active ? ICONS.check : ''}
+            </button>
+          `;
+        }).join('');
+      } else {
+        appState.episodeFilter = 'ALL';
+        epSection.classList.add('hidden');
+      }
+
+      if (appState.episodeFilter !== 'ALL' || appState.searchCategoryFilter !== 'ALL') {
+        filterDot.classList.remove('hidden');
+      } else {
+        filterDot.classList.add('hidden');
+      }
+
+      // Scene Catalog & Dual Progress
+      const { sortedScenes, sceneMap, itemScenesMap } = buildSceneCatalog(project);
+
+      const totalScenes = sortedScenes.length;
+      const doneScenes = sortedScenes.filter(sc => sceneMap[sc].done).length;
+      const scenesPct = totalScenes > 0 ? Math.round((doneScenes / totalScenes) * 100) : 0;
+      document.getElementById('scenesProgressText').textContent = `${doneScenes}/${totalScenes} (${scenesPct}%)`;
+      document.getElementById('scenesProgressBar').style.width = `${scenesPct}%`;
+
+      const totalItems = project.items.length;
+      const doneItems = project.items.filter(i => i.checked).length;
+      const itemsPct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
+      document.getElementById('itemsProgressText').textContent = `${doneItems}/${totalItems} (${itemsPct}%)`;
+      document.getElementById('itemsProgressBar').style.width = `${itemsPct}%`;
+
+      // Filtered Items
+      const filteredItems = project.items.filter(it => {
+        if (!itemMatchesEpisodeFilter(it, appState.episodeFilter)) return false;
+        if (appState.searchCategoryFilter !== 'ALL') {
+          if (appState.searchCategoryFilter === 'COSTUMES') {
+            const hasActualCostumes = it.group === 'COSTUMES' || (it.group === 'CAST' && parseStructuredCostumes(it.details, it.title).costumes.length > 0);
+            if (!hasActualCostumes) return false;
+          } else if (it.group !== appState.searchCategoryFilter) {
+            return false;
+          }
+        }
+        if (!appState.searchQuery) return true;
+        const q = appState.searchQuery.toLowerCase();
+        return (
+          it.title.toLowerCase().includes(q) ||
+          it.category.toLowerCase().includes(q) ||
+          it.scenesRaw.toLowerCase().includes(q) ||
+          it.locationOrEp.toLowerCase().includes(q) ||
+          it.details.toLowerCase().includes(q) ||
+          (it.mainLocation || '').toLowerCase().includes(q) ||
+          (it.userNotes || '').toLowerCase().includes(q)
+        );
+      });
+
+      const locItems = project.items.filter(i => i.group === 'LOCATIONS' && itemMatchesEpisodeFilter(i, appState.episodeFilter));
+      const mainLocGroups = buildMainLocationsCatalog(project, locItems, itemScenesMap);
+
+      // Exact costume count (e.g. Maca 3 + Tibor 3 = 6 kostýmov, excluding Ľubica Jarjabková!)
+      const { peopleWithCostumes, customCostumeItems, totalCostumeCount } = getEpisodeCostumesSummary(project, appState.episodeFilter);
+
+      const counts = {
+        SCENES: sortedScenes.length,
+        CAST: project.items.filter(i => i.group === 'CAST' && itemMatchesEpisodeFilter(i, appState.episodeFilter)).length,
+        LOCATIONS: locItems.length,
+        MAIN_LOCS: mainLocGroups.length,
+        GASTRO: project.items.filter(i => i.group === 'GASTRO' && itemMatchesEpisodeFilter(i, appState.episodeFilter)).length,
+        COSTUMES: totalCostumeCount,
+        PROPS: project.items.filter(i => i.group === 'PROPS' && itemMatchesEpisodeFilter(i, appState.episodeFilter)).length,
+        ALERTS: project.items.filter(i => detectSpecialTags(i.category, i.title, i.details).some(t => t.type === 'ALERT') && itemMatchesEpisodeFilter(i, appState.episodeFilter)).length
+      };
+
+      const tabs = [
+        { id: 'HOME', label: 'Rozcestník', count: null },
+        { id: 'SCENES', label: 'Obrazy', count: `${doneScenes}/${counts.SCENES}` },
+        { id: 'CAST', label: 'Účinkujúci', count: counts.CAST },
+        { id: 'LOCATIONS', label: 'Lokácie', count: `${counts.MAIN_LOCS} (${counts.LOCATIONS})` },
+        { id: 'GASTRO', label: 'Gastro', count: counts.GASTRO },
+        { id: 'COSTUMES', label: 'Kostýmy', count: `${peopleWithCostumes.length} (${counts.COSTUMES})` },
+        { id: 'PROPS', label: 'Rekvizity', count: counts.PROPS },
+        { id: 'ALERTS', label: 'Pozor', count: counts.ALERTS, alert: true }
+      ];
+
+      const isSearching = !!(appState.searchQuery || appState.searchCategoryFilter !== 'ALL');
+      const effectiveTab = (isSearching && appState.activeTab === 'HOME') ? 'SEARCH' : appState.activeTab;
+
+      document.getElementById('navTabs').innerHTML = tabs.map(t => {
+        const isActive = appState.activeTab === t.id && effectiveTab !== 'SEARCH';
+        return `
+          <button onclick="navigateTab('${t.id}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
+            isActive
+              ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 shadow-2xs'
+              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900'
+          }">
+            ${t.alert && t.count > 0 ? '<span class="w-2 h-2 rounded-full bg-rose-500"></span>' : ''}
+            <span>${t.label}</span>
+            ${t.count !== null ? `<span class="text-[11px] opacity-65 font-semibold">${t.count}</span>` : ''}
+          </button>
+        `;
+      }).join('');
+
+      const mainEl = document.getElementById('mainContent');
+      if (effectiveTab === 'HOME') {
+        mainEl.innerHTML = renderHomeBento(project, counts, doneScenes, totalScenes, doneItems, totalItems, peopleWithCostumes.length);
+      } else if (effectiveTab === 'SCENES') {
+        mainEl.innerHTML = renderCompactScenes(project, sortedScenes, sceneMap);
+      } else if (effectiveTab === 'LOCATIONS') {
+        mainEl.innerHTML = renderLocationsView(project, locItems, mainLocGroups, itemScenesMap);
+      } else if (effectiveTab === 'COSTUMES') {
+        mainEl.innerHTML = renderUnifiedCostumesView(project, peopleWithCostumes, customCostumeItems, totalCostumeCount, itemScenesMap);
+      } else {
+        let list = filteredItems;
+        let sectionTitle = 'Výsledky vyhľadávania';
+        let sectionSubtitle = `Nájdených ${list.length} položiek`;
+        let defaultCatForAdd = 'ÚČINKUJÚCI';
+
+        if (effectiveTab === 'CAST') {
+          list = filteredItems.filter(i => i.group === 'CAST');
+          sectionTitle = 'Účinkujúci';
+          sectionSubtitle = 'Moderátori, historici, kuchári, kostýmová výtvarníčka a komparz — kliknite pre detail.';
+          defaultCatForAdd = 'ÚČINKUJÚCI';
+        } else if (effectiveTab === 'GASTRO') {
+          list = filteredItems.filter(i => i.group === 'GASTRO');
+          sectionTitle = 'Gastro a menu';
+          sectionSubtitle = 'Suroviny, degustácie, chody a hostiny — kliknite pre kompletný rozpis.';
+          defaultCatForAdd = 'GASTRO';
+        } else if (effectiveTab === 'PROPS') {
+          list = filteredItems.filter(i => i.group === 'PROPS');
+          sectionTitle = 'Rekvizity a technika';
+          sectionSubtitle = 'Zoznam rekvizít, zvierat, zbraní a techniky.';
+          defaultCatForAdd = 'REKVIZITY';
+        } else if (effectiveTab === 'ALERTS') {
+          list = filteredItems.filter(i => detectSpecialTags(i.category, i.title, i.details).some(t => t.type === 'ALERT'));
+          sectionTitle = 'Dôležité upozornenia (POZOR)';
+          sectionSubtitle = 'Položky vyžadujúce overenie mena, zohnanie rekvizity alebo kamerové obmedzenie.';
+        }
+
+        mainEl.innerHTML = renderCleanListSection(project, sectionTitle, sectionSubtitle, list, itemScenesMap, defaultCatForAdd);
+      }
+    }
+
+    // =========================================================================
+    // 11. HOME BENTO ROZCESTNÍK
+    // =========================================================================
+    function renderHomeBento(project, counts, doneScenes, totalScenes, doneItems, totalItems, costumePeopleCount = 0) {
+      const scenesPct = totalScenes > 0 ? Math.round((doneScenes / totalScenes) * 100) : 0;
+      const itemsPct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
+
+      const costumeWord = counts.COSTUMES === 1 ? 'kostým' : (counts.COSTUMES >= 2 && counts.COSTUMES <= 4 ? 'kostýmy' : 'kostýmov');
+
+      const cards = [
+        {
+          id: 'SCENES',
+          title: 'Obrazy',
+          subtitle: 'Chronologický rozpis obrazov na pľac',
+          metric: `${doneScenes} / ${totalScenes} natočených`,
+          accent: 'from-amber-500/15 to-amber-500/5 border-amber-500/30 hover:border-amber-500',
+          badge: 'bg-amber-500 text-zinc-950',
+          icon: ICONS.scenes
+        },
+        {
+          id: 'CAST',
+          title: 'Účinkujúci',
+          subtitle: 'Moderátori, historici, kuchár a komparz',
+          metric: `${counts.CAST} osôb`,
+          accent: 'from-sky-500/10 to-transparent border-zinc-200 dark:border-zinc-800 hover:border-sky-500/60',
+          badge: 'bg-sky-500/15 text-sky-600 dark:text-sky-400',
+          icon: ICONS.cast
+        },
+        {
+          id: 'LOCATIONS',
+          title: 'Lokácie & Parkovanie',
+          subtitle: `${counts.MAIN_LOCS} hlavné lokácie (${counts.LOCATIONS} priestorov)`,
+          metric: `${counts.MAIN_LOCS} hlavné`,
+          accent: 'from-emerald-500/10 to-transparent border-zinc-200 dark:border-zinc-800 hover:border-emerald-500/60',
+          badge: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+          icon: ICONS.locations
+        },
+        {
+          id: 'GASTRO',
+          title: 'Gastro & Menu',
+          subtitle: 'Chody, suroviny, vína a hostiny',
+          metric: `${counts.GASTRO} blokov`,
+          accent: 'from-orange-500/10 to-transparent border-zinc-200 dark:border-zinc-800 hover:border-orange-500/60',
+          badge: 'bg-orange-500/15 text-orange-600 dark:text-orange-400',
+          icon: ICONS.gastro
+        },
+        {
+          id: 'COSTUMES',
+          title: 'Kostýmy',
+          subtitle: `${costumePeopleCount} osoby • ${counts.COSTUMES} ${costumeWord}`,
+          metric: `${costumePeopleCount} (${counts.COSTUMES})`,
+          accent: 'from-pink-500/10 to-transparent border-zinc-200 dark:border-zinc-800 hover:border-pink-500/60',
+          badge: 'bg-pink-500/15 text-pink-600 dark:text-pink-400',
+          icon: ICONS.costumes
+        },
+        {
+          id: 'PROPS',
+          title: 'Rekvizity',
+          subtitle: 'Rekvizity, zvieratá, zbrane a technika',
+          metric: `${counts.PROPS} skupín`,
+          accent: 'from-purple-500/10 to-transparent border-zinc-200 dark:border-zinc-800 hover:border-purple-500/60',
+          badge: 'bg-purple-500/15 text-purple-600 dark:text-purple-400',
+          icon: ICONS.props
+        }
+      ];
+
+      return `
+        <div class="space-y-6">
+          <div class="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-3xl p-5 sm:p-6 shadow-2xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">Aktuálna časť relácie</span>
+                  ${appState.episodeFilter !== 'ALL' ? `
+                    <span class="px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold">
+                      Časť: ${escapeHtml(appState.episodeFilter)}
+                    </span>
+                  ` : ''}
+                </div>
+
+                <!-- Editable Episode Title directly in Rozcestník -->
+                <div id="inlineProjectTitleWrap" class="mt-0.5 flex items-center gap-2.5 group">
+                  <h2
+                    onclick="startInlineRenameProject()"
+                    class="text-2xl sm:text-3xl font-extrabold tracking-tight cursor-pointer hover:text-amber-500 transition truncate"
+                    title="Kliknite pre premenovanie tejto časti"
+                  >
+                    ${escapeHtml(project.name)}
+                  </h2>
+                  <button
+                    onclick="startInlineRenameProject()"
+                    class="p-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10 transition shrink-0"
+                    title="Premenovať časť"
+                  >
+                    ${ICONS.edit}
+                  </button>
+                </div>
+
+                <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                  Kliknite na názov časti vyššie pre okamžité premenovanie, alebo vyberte sekciu nižšie.
+                </p>
+              </div>
+
+              ${counts.ALERTS > 0 ? `
+                <button onclick="navigateTab('ALERTS')" class="self-start sm:self-center flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/25 text-rose-600 dark:text-rose-400 transition shrink-0">
+                  <span class="text-rose-500">${ICONS.alert}</span>
+                  <div class="text-left">
+                    <div class="text-xs font-extrabold leading-none">${counts.ALERTS}× POZOR v scenári</div>
+                    <div class="text-[11px] opacity-80 mt-0.5">Zobraziť kritické body</div>
+                  </div>
+                </button>
+              ` : ''}
+            </div>
+
+            <!-- Dual Progress Bars -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 pt-5 border-t border-zinc-100 dark:border-zinc-800/80">
+              <div onclick="navigateTab('SCENES')" class="cursor-pointer p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950/60 hover:bg-amber-500/5 border border-zinc-200/60 dark:border-zinc-800/80 transition">
+                <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+                  <span class="text-zinc-500 dark:text-zinc-400">Natočené obrazy (na pľaci)</span>
+                  <span class="text-amber-600 dark:text-amber-400">${doneScenes} z ${totalScenes} (${scenesPct}%)</span>
+                </div>
+                <div class="w-full h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div class="h-full bg-amber-500 transition-all duration-300" style="width: ${scenesPct}%"></div>
+                </div>
+              </div>
+
+              <div onclick="navigateTab('PROPS')" class="cursor-pointer p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950/60 hover:bg-emerald-500/5 border border-zinc-200/60 dark:border-zinc-800/80 transition">
+                <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+                  <span class="text-zinc-500 dark:text-zinc-400">Vybavené položky (príprava)</span>
+                  <span class="text-emerald-600 dark:text-emerald-400">${doneItems} z ${totalItems} (${itemsPct}%)</span>
+                </div>
+                <div class="w-full h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div class="h-full bg-emerald-500 transition-all duration-300" style="width: ${itemsPct}%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6 Bento Category Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            ${cards.map(c => `
+              <button
+                onclick="navigateTab('${c.id}')"
+                class="group text-left bg-gradient-to-br ${c.accent} bg-white dark:bg-zinc-900 border rounded-3xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-md flex flex-col justify-between gap-5"
+              >
+                <div class="flex items-center justify-between w-full">
+                  <div class="w-10 h-10 rounded-2xl ${c.badge} flex items-center justify-center">
+                    ${c.icon}
+                  </div>
+                  <span class="text-xs font-extrabold px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                    ${c.metric}
+                  </span>
+                </div>
+
+                <div>
+                  <h3 class="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white group-hover:text-amber-500 transition flex items-center justify-between">
+                    <span>${c.title}</span>
+                    <span class="text-zinc-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition">${ICONS.chevronRight}</span>
+                  </h3>
+                  <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">${c.subtitle}</p>
+                </div>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 12. UNIFIED COSTUMES VIEW (EXACT COSTUME COUNT, NO ĽUBICA JARJABKOVÁ!)
+    // =========================================================================
+    function renderUnifiedCostumesView(project, peopleWithCostumes, customCostumeItems, totalCostumeCount, itemScenesMap) {
+      const costumeWord = totalCostumeCount === 1 ? 'kostým' : (totalCostumeCount >= 2 && totalCostumeCount <= 4 ? 'kostýmy' : 'kostýmov');
+
+      return `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between gap-2 px-1">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h2 class="text-lg sm:text-xl font-extrabold tracking-tight">Kostýmy</h2>
+                <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-pink-500/15 text-pink-600 dark:text-pink-400">
+                  ${peopleWithCostumes.length} (${totalCostumeCount}) — ${peopleWithCostumes.length} osoby, ${totalCostumeCount} ${costumeWord}
+                </span>
+              </div>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Rozpis kostýmov podľa obrazov (iba účinkujúci s kostýmovými zmenami).
+              </p>
+            </div>
+
+            <button onclick="openAddItemModal('KOSTÝMY')" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-extrabold flex items-center gap-1 shrink-0 transition">
+              ${ICONS.plus}
+              <span>Pridať kostým</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${peopleWithCostumes.map(({ person, costumes, extraNote }) => {
+              const pCount = costumes.length;
+              const pWord = pCount === 1 ? 'kostým' : (pCount >= 2 && pCount <= 4 ? 'kostýmy' : 'kostýmov');
+
+              return `
+                <div class="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-3xl p-5 flex flex-col justify-between gap-4 shadow-2xs">
+                  <div class="space-y-3.5">
+                    <!-- Person Header with exact costume count badge -->
+                    <div onclick="openItemModal('${person.id}')" class="cursor-pointer flex items-center justify-between gap-2 pb-3 border-b border-zinc-100 dark:border-zinc-800/80 group">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-pink-500/15 text-pink-600 dark:text-pink-400 flex items-center justify-center">
+                          ${ICONS.costumes}
+                        </div>
+                        <div>
+                          <h3 class="font-extrabold text-base text-zinc-900 dark:text-white group-hover:text-pink-500 transition">${escapeHtml(person.title)}</h3>
+                          <span class="text-[11px] font-semibold text-pink-600 dark:text-pink-400">${pCount} ${pWord} v časti ${escapeHtml(project.name)}</span>
+                        </div>
+                      </div>
+                      <span class="text-xs font-bold px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 group-hover:bg-pink-500 group-hover:text-white transition">Upraviť</span>
+                    </div>
+
+                    <!-- Structured Costume Cards -->
+                    <div class="space-y-2.5">
+                      ${costumes.map(c => `
+                        <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/70 dark:border-zinc-800 space-y-2">
+                          <div class="flex items-start justify-between gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-pink-500 text-white text-[11px] font-extrabold uppercase tracking-wider shrink-0">
+                              ${ICONS.hanger}
+                              <span>Kostým ${escapeHtml(c.num)}</span>
+                            </span>
+
+                            ${c.scenesRaw ? `
+                              <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md">
+                                Obrazy: ${escapeHtml(c.scenesRaw)}
+                              </span>
+                            ` : ''}
+                          </div>
+
+                          <div class="font-bold text-sm text-zinc-900 dark:text-white pl-0.5">
+                            ${escapeHtml(c.name)}
+                          </div>
+
+                          ${c.discrete.length > 0 ? `
+                            <div class="pt-1 flex flex-wrap items-center gap-1">
+                              <span class="text-[10px] font-bold uppercase text-zinc-400 mr-1 flex items-center gap-1">
+                                ${ICONS.scenesSm}
+                                <span>Preklik na obraz:</span>
+                              </span>
+                              ${c.discrete.slice(0, 10).map(sc => `
+                                <button
+                                  onclick="openSceneModal('${escapeHtml(sc)}')"
+                                  class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 transition"
+                                >
+                                  ${escapeHtml(sc)}
+                                </button>
+                              `).join('')}
+                              ${c.discrete.length > 10 ? `<span class="text-[10px] font-bold text-zinc-400">+${c.discrete.length - 10}</span>` : ''}
+                            </div>
+                          ` : ''}
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+
+                  ${extraNote ? `
+                    <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-xs text-zinc-500 dark:text-zinc-400">
+                      <strong class="text-zinc-700 dark:text-zinc-200">Poznámka:</strong> ${escapeHtml(extraNote)}
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          ${customCostumeItems.length > 0 ? `
+            <div class="pt-2 space-y-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-zinc-400 px-1 block">Ďalšie pridané kostýmy (${customCostumeItems.length})</span>
+              <div class="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-3xl divide-y divide-zinc-100 dark:divide-zinc-800/70 overflow-hidden shadow-2xs">
+                ${customCostumeItems.map(item => renderCleanRow(project, item, itemScenesMap[item.id] || [])).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 13. LOCATIONS VIEW + ADD SUB-LOCATION INSIDE MAIN LOCATION MODAL
+    // =========================================================================
+    function setLocationsSubView(mode) {
+      appState.locationsSubView = mode;
+      saveState();
+      syncHistoryPush();
+      renderApp();
+    }
+
+    function renderLocationsView(project, locItems, mainLocGroups, itemScenesMap) {
+      const isMain = appState.locationsSubView === 'MAIN';
+
+      return `
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+            <div>
+              <h2 class="text-lg sm:text-xl font-extrabold tracking-tight">Lokácie a presuny</h2>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                Hlavné lokácie spájajú miestnosti v jednom objekte (kde raz zaparkujete a iba prenášate techniku).
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+              <div class="inline-flex p-1 rounded-2xl bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                <button
+                  onclick="setLocationsSubView('MAIN')"
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                    isMain ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-2xs' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                  }"
+                >
+                  ${ICONS.parking}
+                  <span>Hlavné lokácie (${mainLocGroups.length})</span>
+                </button>
+                <button
+                  onclick="setLocationsSubView('ALL')"
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                    !isMain ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-2xs' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                  }"
+                >
+                  Všetky priestory (${locItems.length})
+                </button>
+              </div>
+
+              <button onclick="openAddItemModal('LOKÁCIA (INT.)')" class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-extrabold flex items-center gap-1 shrink-0 transition">
+                ${ICONS.plus}
+                <span>Pridať</span>
+              </button>
+            </div>
+          </div>
+
+          ${isMain ? `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              ${mainLocGroups.map(grp => {
+                const scenesArr = Array.from(grp.scenesSet);
+                const allChecked = grp.subLocations.length > 0 && grp.subLocations.every(l => l.checked);
+                return `
+                  <div
+                    onclick="openMainLocationModal('${escapeHtml(grp.name)}')"
+                    class="group cursor-pointer bg-white dark:bg-zinc-900 border ${
+                      allChecked ? 'border-emerald-500/40 opacity-70' : 'border-zinc-200/80 dark:border-zinc-800/80 hover:border-emerald-500'
+                    } rounded-3xl p-5 transition flex flex-col justify-between gap-4 shadow-2xs"
+                  >
+                    <div>
+                      <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                          <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                            ${ICONS.parking}
+                          </div>
+                          <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">Hlavné stanovište techniky</span>
+                            <h3 class="font-extrabold text-base sm:text-lg text-zinc-900 dark:text-white group-hover:text-emerald-500 transition">
+                              ${escapeHtml(grp.name)}
+                            </h3>
+                          </div>
+                        </div>
+                        <span class="text-xs font-extrabold px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 shrink-0">
+                          ${grp.subLocations.length} ${grp.subLocations.length === 1 ? 'priestor' : (grp.subLocations.length < 5 ? 'priestory' : 'priestorov')}
+                        </span>
+                      </div>
+
+                      <div class="mt-4 flex flex-wrap gap-1.5">
+                        ${grp.subLocations.map(sub => {
+                          const shortSub = sub.title.replace(/^Kaštieľ\s*(Pálffy|Betliar)?\s*[–\-]\s*|^Hrad\s*(Kežmarok)?\s*[–\-]\s*/i, '');
+                          return `
+                            <span class="text-xs font-medium px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300">
+                              ${escapeHtml(shortSub)}
+                            </span>
+                          `;
+                        }).join('')}
+                      </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-xs text-zinc-400">
+                      <span>Spolu ${scenesArr.length} obrazov na tomto mieste</span>
+                      <span class="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <span>Rozkliknúť priestory</span>
+                        ${ICONS.chevronRight}
+                      </span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : `
+            <div class="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-3xl divide-y divide-zinc-100 dark:divide-zinc-800/70 overflow-hidden shadow-2xs">
+              ${locItems.map(item => renderCleanRow(project, item, itemScenesMap[item.id] || [])).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function openMainLocationModal(mainLocName, pushHistory = true) {
+      const project = getCurrentProject();
+      const { itemScenesMap } = buildSceneCatalog(project);
+      const locItems = project.items.filter(i => i.group === 'LOCATIONS');
+      const mainLocGroups = buildMainLocationsCatalog(project, locItems, itemScenesMap);
+      const grp = mainLocGroups.find(g => g.name === mainLocName);
+      if (!grp) return;
+
+      if (pushHistory) {
+        modalStack.push({ type: 'MAIN_LOC', id: mainLocName });
+        syncHistoryPush();
+      }
+      updateModalBackBtn();
+
+      const allScenes = Array.from(grp.scenesSet);
+
+      document.getElementById('modalTitleWrap').innerHTML = `
+        <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">Hlavná lokácia (1 parkovanie)</span>
+        <h2 class="font-extrabold text-base sm:text-lg text-zinc-900 dark:text-white truncate">${escapeHtml(grp.name)}</h2>
+      `;
+
+      document.getElementById('modalBody').innerHTML = `
+        <div class="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between gap-2">
+          <span>V rámci tejto hlavnej lokácie len prenášate techniku medzi <strong>${grp.subLocations.length} priestormi</strong>.</span>
+          <span class="font-extrabold shrink-0">${allScenes.length} obrazov</span>
+        </div>
+
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Podlokácie a miestnosti v tomto areáli</span>
+            <button
+              onclick="openAddItemModal('LOKÁCIA (INT.)', '${escapeHtml(grp.name)}')"
+              class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold flex items-center gap-1 transition shadow-2xs"
+            >
+              ${ICONS.plus}
+              <span>Pridať podlokáciu</span>
+            </button>
+          </div>
+
+          <div class="bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 rounded-2xl divide-y divide-zinc-200/50 dark:divide-zinc-800 overflow-hidden">
+            ${grp.subLocations.map(sub => `
+              <div onclick="openItemModal('${sub.id}')" class="p-3.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="font-bold text-xs sm:text-sm text-zinc-900 dark:text-white">${escapeHtml(sub.title)}</div>
+                  <div class="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1 mt-0.5">${escapeHtml(sub.details || 'Bez poznámok')}</div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="text-xs font-bold px-2 py-0.5 rounded-lg bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200">${escapeHtml(sub.scenesRaw || '—')}</span>
+                  <span class="text-zinc-400">${ICONS.chevronRight}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        ${allScenes.length > 0 ? `
+          <div class="space-y-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">Obrazy natáčané v tejto hlavnej lokácii</span>
+            <div class="flex flex-wrap gap-1.5">
+              ${allScenes.map(sc => `
+                <button onclick="openSceneModal('${escapeHtml(sc)}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-zinc-100 dark:bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 border border-zinc-200 dark:border-zinc-700 transition">
+                  Obraz ${escapeHtml(sc)}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+      `;
+
+      document.getElementById('modalFooter').innerHTML = `
+        <span class="text-[11px] text-zinc-400">Kliknite na podlokáciu pre úpravu alebo detaily</span>
+        <button onclick="closeModal()" class="px-4 py-1.5 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-xs font-bold">Zavrieť</button>
+      `;
+
+      showModalOverlay();
+    }
+
+    // =========================================================================
+    // 14. GENERIC CLEAN LIST & SCENES ("OBRAZY")
+    // =========================================================================
+    function renderCleanListSection(project, title, subtitle, items, itemScenesMap, defaultCat = 'ÚČINKUJÚCI') {
+      return `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between gap-2 px-1">
+            <div>
+              <h2 class="text-lg sm:text-xl font-extrabold tracking-tight">${escapeHtml(title)}</h2>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">${escapeHtml(subtitle)}</p>
+            </div>
+            <button onclick="openAddItemModal('${escapeHtml(defaultCat)}')" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-extrabold transition flex items-center gap-1 shrink-0">
+              ${ICONS.plus}
+              <span>Pridať</span>
+            </button>
+          </div>
+
+          ${items.length === 0 ? `
+            <div class="text-center py-16 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800">
+              <p class="text-sm font-bold text-zinc-500">V tejto kategórii zatiaľ nie sú žiadne položky.</p>
+              <button onclick="openAddItemModal('${escapeHtml(defaultCat)}')" class="mt-3 px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs font-bold hover:bg-amber-500 hover:text-zinc-950 transition">
+                + Pridať prvú položku
+              </button>
+            </div>
+          ` : `
+            <div class="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-3xl divide-y divide-zinc-100 dark:divide-zinc-800/70 overflow-hidden shadow-2xs">
+              ${items.map(item => renderCleanRow(project, item, itemScenesMap[item.id] || [])).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function renderCleanRow(project, item, scenesList) {
+      const specialTags = detectSpecialTags(item.category, item.title, item.details);
+      const hasAlert = specialTags.some(t => t.type === 'ALERT');
+      const isChecked = !!item.checked;
+
+      let subCategory = item.category.replace(/\s*&\s*KOSTÝMY/gi, '');
+      const parenMatch = subCategory.match(/\(([^)]+)\)/);
+      if (parenMatch) subCategory = parenMatch[1];
+
+      const sceneCountLabel = /všetky\s+okrem/i.test(item.scenesRaw)
+        ? `${scenesList.length} obrazov`
+        : (item.scenesRaw || 'Bez obrazu');
+
+      return `
+        <div
+          onclick="openItemModal('${item.id}')"
+          class="group cursor-pointer px-4 sm:px-5 py-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition flex items-center justify-between gap-3 ${
+            isChecked ? 'opacity-55' : ''
+          }"
+        >
+          <div class="flex items-center gap-3.5 min-w-0 flex-1">
+            <button
+              onclick="toggleItemCheck(event, '${item.id}')"
+              title="Označiť ako vybavené"
+              class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition ${
+                isChecked
+                  ? 'bg-emerald-500 border-emerald-500 text-zinc-950'
+                  : 'border-zinc-300 dark:border-zinc-700 hover:border-emerald-500 text-transparent'
+              }"
+            >${ICONS.check}</button>
+
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 group-hover:text-amber-500 transition truncate ${isChecked ? 'line-through' : ''}">
+                  ${escapeHtml(item.title)}
+                </h3>
+                ${hasAlert ? `<span class="w-2 h-2 rounded-full bg-rose-500 shrink-0" title="Obsahuje upozornenie POZOR"></span>` : ''}
+                ${item.userNotes ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">Poznámka</span>` : ''}
+              </div>
+
+              <div class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                <span class="font-medium text-zinc-600 dark:text-zinc-300">${escapeHtml(subCategory)}</span>
+                <span>•</span>
+                <span class="truncate">${escapeHtml(item.mainLocation || item.locationOrEp || project.name)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 shrink-0">
+            <span class="text-xs font-bold px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 max-w-[130px] sm:max-w-[180px] truncate">
+              ${escapeHtml(sceneCountLabel)}
+            </span>
+            <span class="text-zinc-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition">${ICONS.chevronRight}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCompactScenes(project, sortedScenes, sceneMap) {
+      const q = (appState.searchQuery || '').toLowerCase();
+      const filteredScenes = sortedScenes.filter(sc => {
+        const scObj = sceneMap[sc];
+        if (appState.episodeFilter !== 'ALL') {
+          if (!scObj.items.some(it => itemMatchesEpisodeFilter(it, appState.episodeFilter))) return false;
+        }
+        if (!q) return true;
+        if (sc.toLowerCase().includes(q)) return true;
+        return scObj.items.some(it => it.title.toLowerCase().includes(q) || it.details.toLowerCase().includes(q));
+      });
+
+      const doneCount = filteredScenes.filter(sc => sceneMap[sc].done).length;
+
+      return `
+        <div class="space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+            <div>
+              <h2 class="text-lg sm:text-xl font-extrabold tracking-tight">Obrazy</h2>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">Kliknite na obraz pre celú zostavu na pľaci. Kruhovým tlačidlom označte natočený obraz.</p>
+            </div>
+            <div class="text-xs font-extrabold px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+              Natočené: ${doneCount} / ${filteredScenes.length}
+            </div>
+          </div>
+
+          ${filteredScenes.length === 0 ? `
+            <div class="text-center py-16 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800">
+              <p class="text-sm font-bold text-zinc-500">Zatiaľ nie sú zadané žiadne čísla obrazov (napr. 1/1, 2/1).</p>
+              <p class="text-xs text-zinc-400 mt-1">Keď pri položkách vyplníte pole „Obrazy“, automaticky sa tu vytvoria karty obrazov.</p>
+            </div>
+          ` : `
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+              ${filteredScenes.map(sc => {
+                const scObj = sceneMap[sc];
+                const locs = scObj.items.filter(i => i.group === 'LOCATIONS');
+                const cast = scObj.items.filter(i => i.group === 'CAST');
+                const isDone = scObj.done;
+                const locName = locs.length > 0
+                  ? locs[0].title.replace(/^Kaštieľ\s*[–\-]\s*|^Hrad\s*[–\-]\s*/i, '')
+                  : 'Detail vnútri';
+
+                return `
+                  <div
+                    onclick="openSceneModal('${escapeHtml(sc)}')"
+                    class="group cursor-pointer bg-white dark:bg-zinc-900 border ${
+                      isDone
+                        ? 'border-emerald-500/50 bg-emerald-500/5'
+                        : 'border-zinc-200/80 dark:border-zinc-800/80 hover:border-amber-500'
+                    } rounded-2xl p-3.5 transition flex flex-col justify-between gap-3 shadow-2xs"
+                  >
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-sm font-extrabold px-2.5 py-0.5 rounded-lg ${
+                        isDone ? 'bg-emerald-500 text-zinc-950' : 'bg-amber-500 text-zinc-950'
+                      }">
+                        ${escapeHtml(sc)}
+                      </span>
+
+                      <button
+                        onclick="toggleSceneDone(event, '${escapeHtml(sc)}')"
+                        title="Označiť obraz ako natočený"
+                        class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition ${
+                          isDone
+                            ? 'bg-emerald-500 border-emerald-500 text-zinc-950'
+                            : 'border-zinc-300 dark:border-zinc-700 hover:border-amber-500 text-transparent'
+                        }"
+                      >${ICONS.check}</button>
+                    </div>
+
+                    <div>
+                      <div class="text-xs font-bold text-zinc-800 dark:text-zinc-100 line-clamp-1">
+                        ${escapeHtml(locName)}
+                      </div>
+                      <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                        ${cast.length} účinkujúcich • ${scObj.items.length} položiek
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 15. MODALS: ITEM DETAIL, SCENE DETAIL, SETTINGS (ZÁLOHOVANIE AT BOTTOM!)
+    // =========================================================================
+    function highlightAlerts(escapedText) {
+      return escapedText.replace(/(POZOR[^.!;:]*[:!]?|\(overiť\)|\(meno dodám\)|prosím,\s*zohnať|Pevný termín!)/gi,
+        '<span class="bg-rose-500/15 text-rose-600 dark:text-rose-400 font-bold px-1.5 py-0.5 rounded-md">$1</span>'
+      );
+    }
+
+    function openItemModal(itemId, pushHistory = true) {
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === itemId);
+      if (!item) return;
+
+      if (pushHistory) {
+        modalStack.push({ type: 'ITEM', id: itemId });
+        syncHistoryPush();
+      }
+      updateModalBackBtn();
+
+      const { sceneMap, itemScenesMap } = buildSceneCatalog(project);
+      const scenes = itemScenesMap[item.id] || [];
+      const specialTags = detectSpecialTags(item.category, item.title, item.details);
+      const gpsTag = specialTags.find(t => t.type === 'GPS');
+
+      const relatedByScene = project.items.filter(other => {
+        if (other.id === item.id) return false;
+        const otherScenes = itemScenesMap[other.id] || [];
+        return otherScenes.some(sc => scenes.includes(sc));
+      });
+
+      document.getElementById('modalTitleWrap').innerHTML = `
+        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">${escapeHtml(item.category)}</span>
+        <h2 class="font-extrabold text-base sm:text-lg text-zinc-900 dark:text-white truncate">${escapeHtml(item.title)}</h2>
+      `;
+
+      const parsedCostumes = item.group === 'CAST' ? parseStructuredCostumes(item.details, item.title) : { costumes: [], extraNote: '' };
+
+      document.getElementById('modalBody').innerHTML = `
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-zinc-50 dark:bg-zinc-800/50 p-3.5 rounded-2xl border border-zinc-200/60 dark:border-zinc-800">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">${escapeHtml(project.col4Header)}</span>
+            <span class="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white">${escapeHtml(item.locationOrEp || project.name)}</span>
+            ${item.mainLocation ? `<span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-0.5">Hlavná lokácia: ${escapeHtml(item.mainLocation)}</span>` : ''}
+          </div>
+
+          <div class="flex items-center gap-2">
+            ${gpsTag ? `
+              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gpsTag.gps)}" target="_blank" rel="noopener"
+                 class="px-3 py-1.5 rounded-xl bg-emerald-500 text-zinc-950 font-bold text-xs flex items-center gap-1.5">
+                ${ICONS.map}
+                <span>Mapa</span>
+              </a>
+            ` : ''}
+
+            <button onclick="toggleItemCheckInModal('${item.id}')" class="px-3.5 py-1.5 rounded-xl font-bold text-xs transition flex items-center gap-1.5 ${
+              item.checked
+                ? 'bg-emerald-500 text-zinc-950'
+                : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-emerald-500 hover:text-zinc-950'
+            }">
+              ${item.checked ? `${ICONS.check}<span>Vybavené</span>` : '<span>Označiť ako vybavené</span>'}
+            </button>
+          </div>
+        </div>
+
+        ${parsedCostumes.costumes.length > 0 ? `
+          <div class="space-y-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">Kostýmy (${parsedCostumes.costumes.length})</span>
+            <div class="space-y-2">
+              ${parsedCostumes.costumes.map(c => `
+                <div class="p-3 rounded-2xl bg-pink-500/5 border border-pink-500/20 flex flex-col gap-1.5">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-pink-500 text-white text-[11px] font-extrabold uppercase">
+                      ${ICONS.hanger}
+                      <span>Kostým ${escapeHtml(c.num)}</span>
+                    </span>
+                    ${c.scenesRaw ? `<span class="text-xs font-bold text-amber-600 dark:text-amber-400">Obrazy: ${escapeHtml(c.scenesRaw)}</span>` : ''}
+                  </div>
+                  <div class="font-bold text-sm text-zinc-900 dark:text-white">${escapeHtml(c.name)}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="space-y-1.5">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Podrobnosti a produkčné poznámky</span>
+          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 text-zinc-800 dark:text-zinc-100 leading-relaxed text-sm">
+            ${highlightAlerts(escapeHtml(item.details || 'Bez ďalších poznámok.'))}
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Obrazy (${escapeHtml(item.scenesRaw || '—')})</span>
+            <span class="text-[11px] text-zinc-400">Kliknite na obraz pre detail</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            ${scenes.length > 0 ? scenes.map(sc => {
+              const scDone = sceneMap[sc]?.done;
+              return `
+                <button onclick="openSceneModal('${escapeHtml(sc)}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold border transition flex items-center gap-1.5 ${
+                  scDone
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950'
+                }">
+                  <span>${escapeHtml(sc)}</span>
+                  ${scDone ? ICONS.check : ''}
+                </button>
+              `;
+            }).join('') : `<span class="text-xs text-zinc-400">Zatiaľ bez priradeného obrazu</span>`}
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">Vaša poznámka (kontakt, stav, zmena)</label>
+          <textarea
+            rows="2"
+            oninput="saveUserNote('${item.id}', this.value)"
+            placeholder="Dopíšte poznámku (ukladá sa automaticky)..."
+            class="w-full rounded-2xl bg-zinc-100 dark:bg-zinc-800/90 border border-transparent focus:border-amber-500 p-3 text-xs sm:text-sm focus:outline-none transition"
+          >${escapeHtml(item.userNotes || '')}</textarea>
+        </div>
+
+        ${relatedByScene.length > 0 ? `
+          <details class="group bg-zinc-50 dark:bg-zinc-800/30 rounded-2xl border border-zinc-200/60 dark:border-zinc-800 overflow-hidden">
+            <summary class="px-4 py-3 text-xs font-bold cursor-pointer flex items-center justify-between text-zinc-700 dark:text-zinc-300 select-none">
+              <span>Súvisiace položky v rovnakých obrazoch (${relatedByScene.length})</span>
+              <span class="group-open:rotate-180 transition">${ICONS.chevronDown}</span>
+            </summary>
+            <div class="px-4 pb-3 pt-1 divide-y divide-zinc-200/50 dark:divide-zinc-800 max-h-60 overflow-y-auto">
+              ${relatedByScene.map(rel => `
+                <div onclick="openItemModal('${rel.id}')" class="py-2.5 flex items-center justify-between gap-2 cursor-pointer hover:text-amber-500 transition">
+                  <div class="min-w-0">
+                    <div class="text-xs font-bold truncate">${escapeHtml(rel.title)}</div>
+                    <div class="text-[11px] text-zinc-400 truncate">${escapeHtml(rel.category)} • ${escapeHtml(rel.scenesRaw)}</div>
+                  </div>
+                  <span class="shrink-0">${ICONS.chevronRight}</span>
+                </div>
+              `).join('')}
+            </div>
+          </details>
+        ` : ''}
+
+        <details class="group bg-zinc-50 dark:bg-zinc-800/30 rounded-2xl border border-zinc-200/60 dark:border-zinc-800 overflow-hidden">
+          <summary class="px-4 py-3 text-xs font-bold cursor-pointer flex items-center justify-between text-zinc-500 select-none">
+            <span>Upraviť alebo vymazať položku</span>
+            <span class="group-open:rotate-180 transition">${ICONS.chevronDown}</span>
+          </summary>
+          <div class="p-4 pt-2 space-y-2.5">
+            <div>
+              <label class="text-[10px] font-bold uppercase text-zinc-400">Názov / Položka</label>
+              <input id="editTitle" type="text" value="${escapeHtml(item.title)}" class="w-full rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-xs mt-0.5" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] font-bold uppercase text-zinc-400">Obrazy</label>
+                <input id="editScenes" type="text" value="${escapeHtml(item.scenesRaw)}" class="w-full rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-xs mt-0.5" />
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase text-zinc-400">${escapeHtml(project.col4Header)}</label>
+                <input id="editLoc" type="text" value="${escapeHtml(item.locationOrEp)}" class="w-full rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-xs mt-0.5" />
+              </div>
+            </div>
+            ${item.group === 'LOCATIONS' ? `
+              <div>
+                <label class="text-[10px] font-bold uppercase text-zinc-400">Hlavná lokácia (areál / parkovanie)</label>
+                <input id="editMainLoc" type="text" value="${escapeHtml(item.mainLocation || '')}" class="w-full rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-xs mt-0.5" />
+              </div>
+            ` : ''}
+            <div>
+              <label class="text-[10px] font-bold uppercase text-zinc-400">Detaily a poznámky</label>
+              <textarea id="editDetails" rows="3" class="w-full rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2.5 text-xs mt-0.5">${escapeHtml(item.details)}</textarea>
+            </div>
+            <div class="flex justify-between pt-1">
+              <button onclick="deleteItem('${item.id}')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-500 text-xs font-bold">Vymazať</button>
+              <button onclick="saveItemEdits('${item.id}')" class="px-4 py-1.5 rounded-xl bg-amber-500 text-zinc-950 text-xs font-bold">Uložiť zmeny</button>
+            </div>
+          </div>
+        </details>
+      `;
+
+      document.getElementById('modalFooter').innerHTML = `
+        <span class="text-[11px] text-zinc-400">${escapeHtml(project.name)}</span>
+        <button onclick="closeModal()" class="px-4 py-1.5 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-xs font-bold">Zavrieť</button>
+      `;
+
+      showModalOverlay();
+    }
+
+    function openSceneModal(sceneCode, pushHistory = true) {
+      const project = getCurrentProject();
+      const { sceneMap } = buildSceneCatalog(project);
+      const scObj = sceneMap[sceneCode];
+      if (!scObj) return;
+
+      if (pushHistory) {
+        modalStack.push({ type: 'SCENE', id: sceneCode });
+        syncHistoryPush();
+      }
+      updateModalBackBtn();
+
+      const locs = scObj.items.filter(i => i.group === 'LOCATIONS');
+      const cast = scObj.items.filter(i => i.group === 'CAST');
+      const gastro = scObj.items.filter(i => i.group === 'GASTRO');
+      const props = scObj.items.filter(i => i.group === 'PROPS');
+
+      document.getElementById('modalTitleWrap').innerHTML = `
+        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">${escapeHtml(project.name)}</span>
+        <h2 class="font-extrabold text-lg sm:text-xl text-zinc-900 dark:text-white">Obraz ${escapeHtml(sceneCode)}</h2>
+      `;
+
+      const renderGroupList = (label, arr) => {
+        if (arr.length === 0) return '';
+        return `
+          <div class="space-y-1.5">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">${label} (${arr.length})</span>
+            <div class="bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 rounded-2xl divide-y divide-zinc-200/50 dark:divide-zinc-800 overflow-hidden">
+              ${arr.map(it => `
+                <div onclick="openItemModal('${it.id}')" class="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="font-bold text-xs sm:text-sm text-zinc-900 dark:text-white truncate">${escapeHtml(it.title)}</div>
+                    <div class="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1 mt-0.5">${escapeHtml(it.details)}</div>
+                  </div>
+                  <span class="text-amber-500 shrink-0">${ICONS.chevronRight}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      };
+
+      document.getElementById('modalBody').innerHTML = `
+        <div class="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 p-3.5 rounded-2xl border border-zinc-200/60 dark:border-zinc-800">
+          <div>
+            <div class="text-xs font-bold">Stav obrazu ${escapeHtml(sceneCode)}</div>
+            <div class="text-[11px] text-zinc-400">Započítava sa do percent „Obrazy“</div>
+          </div>
+          <button onclick="toggleSceneDoneInModal('${escapeHtml(sceneCode)}')" class="px-4 py-2 rounded-xl font-extrabold text-xs transition flex items-center gap-1.5 ${
+            scObj.done
+              ? 'bg-emerald-500 text-zinc-950'
+              : 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
+          }">
+            ${scObj.done ? `${ICONS.check}<span>Obraz je natočený</span>` : '<span>Označiť ako natočený</span>'}
+          </button>
+        </div>
+
+        ${renderGroupList('Lokácia', locs)}
+        ${renderGroupList('Účinkujúci na pľaci', cast)}
+        ${renderGroupList('Gastro v obraze', gastro)}
+        ${renderGroupList('Rekvizity a technika', props)}
+      `;
+
+      document.getElementById('modalFooter').innerHTML = `
+        <span class="text-[11px] text-zinc-400">Kliknite na položku pre plný detail</span>
+        <button onclick="closeModal()" class="px-4 py-1.5 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-xs font-bold">Zavrieť</button>
+      `;
+
+      showModalOverlay();
+    }
+
+    // =========================================================================
+    // 16. SETTINGS MODAL (ZÁLOHOVANIE AT THE BOTTOM, ONLY 1 SLIDER!)
+    // =========================================================================
+    function openSettingsMenu() {
+      const project = getCurrentProject();
+      modalStack = [];
+      updateModalBackBtn();
+
+      document.getElementById('modalTitleWrap').innerHTML = `
+        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">Nastavenia</span>
+        <h2 class="font-extrabold text-base sm:text-lg">Správa časti a zálohovanie</h2>
+      `;
+
+      document.getElementById('modalBody').innerHTML = `
+        <!-- 1. TOP: CURRENT EPISODE ACTIONS -->
+        <div class="space-y-2">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block px-1">Aktuálna časť (${escapeHtml(project.name)})</span>
+
+          <button onclick="exportCurrentCSV()" class="w-full p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-800 text-left flex items-center justify-between transition">
+            <div class="flex items-center gap-3">
+              <span class="text-amber-500">${ICONS.download}</span>
+              <div>
+                <div class="font-bold text-sm">Exportovať aktuálnu časť do CSV</div>
+                <div class="text-xs text-zinc-400">Stiahne výrobný list „${escapeHtml(project.name)}“ vo formáte CSV</div>
+              </div>
+            </div>
+            <span>${ICONS.chevronRight}</span>
+          </button>
+
+          <button onclick="deleteCurrentProject()" class="w-full p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 hover:bg-rose-500/10 border border-zinc-200/60 dark:border-zinc-800 text-left flex items-center justify-between transition text-rose-500">
+            <div class="flex items-center gap-3">
+              <span>${ICONS.trash}</span>
+              <div>
+                <div class="font-bold text-sm">Odstrániť túto časť z aplikácie</div>
+                <div class="text-xs opacity-75">Trvalo vymaže „${escapeHtml(project.name)}“ z pamäte</div>
+              </div>
+            </div>
+            <span>${ICONS.chevronRight}</span>
+          </button>
+        </div>
+
+        <!-- 2. BOTTOM: ZÁLOHOVANIE (ONLY THE SLIDER — NO EXTRA BUTTONS!) -->
+        <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block px-1 mb-2">Zálohovanie</span>
+
+          <div class="p-4 rounded-3xl bg-emerald-500/10 border border-emerald-500/25 space-y-2.5">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-500 text-zinc-950 flex items-center justify-center shrink-0">
+                  ${ICONS.cloud}
+                </div>
+                <div>
+                  <div class="font-extrabold text-sm text-zinc-900 dark:text-white">Zálohovať</div>
+                  <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                    Vyberiete miesto zálohy (napr. Google Drive). Ak sa tam nájde stará záloha, ponúkne jej obnovenie.
+                  </div>
+                </div>
+              </div>
+
+              <label class="relative inline-flex items-center cursor-pointer shrink-0 select-none">
+                <input type="checkbox" class="sr-only" ${autoBackupEnabled ? 'checked' : ''} onchange="toggleAutoBackupSwitch(this)" />
+                <div class="w-14 h-8 rounded-full transition-colors duration-200 p-1 flex items-center ${autoBackupEnabled ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'}">
+                  <div class="w-6 h-6 rounded-full bg-white shadow-md transform transition-transform duration-200 flex items-center justify-center ${autoBackupEnabled ? 'translate-x-6' : 'translate-x-0'}">
+                    <span class="w-2 h-2 rounded-full ${autoBackupEnabled ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-500'}"></span>
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            ${autoBackupEnabled && backupFileName ? `
+              <div class="px-3 py-2 rounded-xl bg-white/70 dark:bg-zinc-900/70 text-xs flex items-center justify-between">
+                <span class="font-semibold text-emerald-700 dark:text-emerald-300 truncate">Miesto zálohy: ${escapeHtml(backupFileName)}</span>
+                <span class="text-[11px] text-zinc-400 shrink-0 ml-2">${appState.lastBackupTime ? `Automaticky uložené ${appState.lastBackupTime}` : 'Aktívne'}</span>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('modalFooter').innerHTML = `
+        <span class="text-[11px] text-zinc-400">${autoBackupEnabled ? 'Automatická záloha je zapnutá' : 'Dáta sú uložené v lokálnej pamäti'}</span>
+        <button onclick="closeModal()" class="px-4 py-1.5 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-xs font-bold">Zavrieť</button>
+      `;
+
+      showModalOverlay();
+    }
+
+    // =========================================================================
+    // 17. NEW EPISODE WIZARD & ADD ITEM MODAL
+    // =========================================================================
+    function openNewEpisodeWizard() {
+      document.getElementById('projectDropdownMenu').classList.add('hidden');
+      modalStack = [];
+      updateModalBackBtn();
+
+      document.getElementById('modalTitleWrap').innerHTML = `
+        <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">Nový projekt</span>
+        <h2 class="font-extrabold text-base sm:text-lg">Vytvoriť novú časť od základu</h2>
+      `;
+
+      document.getElementById('modalBody').innerHTML = `
+        <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+          Založte si čistý Call Sheet. Postupne si sem môžete pridávať účinkujúcich, lokácie, gastro, kostýmy a rekvizity.
+        </p>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-zinc-400 mb-1">Názov projektu / časti *</label>
+            <input id="wizardEpName" type="text" placeholder="Napr. Epizóda 1 / Názov lokality..." class="w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-amber-500" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-zinc-400 mb-1">Hlavná lokácia (areál / kde parkujeme)</label>
+            <input id="wizardMainLoc" type="text" placeholder="Napr. Hlavný areál" class="w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-amber-500" />
+          </div>
+        </div>
+      `;
+
+      document.getElementById('modalFooter').innerHTML = `
+        <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-xs font-bold">Zrušiť</button>
+        <button onclick="createBlankEpisode()" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold">Vytvoriť</button>
+      `;
+
+      showModalOverlay();
+    }
+
+    function createBlankEpisode() {
+      const nameInput = document.getElementById('wizardEpName').value.trim();
+      const mainLocInput = document.getElementById('wizardMainLoc').value.trim();
+
+      if (!nameInput) {
+        alert('Zadajte názov projektu alebo časti.');
+        return;
+      }
+
+      const mainComplex = mainLocInput || `Areál: ${nameInput}`;
+      const baseId = nameInput.replace(/\s+/g, '_');
+      const starterItems = [];
+
+      if (mainLocInput) {
+        starterItems.push({
+          id: `${baseId}_init_1`,
+          category: 'LOKÁCIA (EXT./INT.)',
+          group: 'LOCATIONS',
+          mainLocation: mainComplex,
+          title: mainLocInput,
+          scenesRaw: '1/1',
+          locationOrEp: 'EXT. / INT.',
+          details: '',
+          userNotes: '',
+          checked: false
+        });
+      }
+
+      appState.projects[nameInput] = {
+        name: nameInput,
+        col4Header: 'TYP / LOKALITA',
+        items: starterItems,
+        sceneDone: {}
+      };
+
+      appState.activeProject = nameInput;
+      appState.activeTab = 'HOME';
+      appState.episodeFilter = 'ALL';
+      saveState();
+      closeModal();
+      syncHistoryPush();
+      renderApp();
+    }
+
+    function openAddItemModal(preselectedCategory = 'ÚČINKUJÚCI', prefilledMainLocation = '') {
+      const project = getCurrentProject();
+      const returnToMainLoc = prefilledMainLocation || '';
+
+      document.getElementById('modalTitleWrap').innerHTML = `
+        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">${escapeHtml(project.name)}</span>
+        <h2 class="font-extrabold text-base sm:text-lg">${returnToMainLoc ? `Pridať podlokáciu do: ${escapeHtml(returnToMainLoc)}` : 'Pridať položku'}</h2>
+      `;
+
+      const categories = [
+        { val: 'ÚČINKUJÚCI', label: 'Účinkujúci (Herci, Moderátori, Hostia)' },
+        { val: 'LOKÁCIA (INT.)', label: 'Lokácia – Interiér (miestnosť / priestor)' },
+        { val: 'LOKÁCIA (EXT.)', label: 'Lokácia – Exteriér' },
+        { val: 'GASTRO', label: 'Gastro (Suroviny, Jedlo, Hostina)' },
+        { val: 'KOSTÝMY', label: 'Kostýmy (Oblečenie a prezleky)' },
+        { val: 'REKVIZITY', label: 'Rekvizity & Technika' }
+      ];
+
+      const defaultMainLoc = prefilledMainLocation || `Areál: ${project.name}`;
+
+      document.getElementById('modalBody').innerHTML = `
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-zinc-400 mb-1">Kategória</label>
+            <select id="newCat" onchange="toggleNewItemMainLocField(this.value)" class="w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-sm font-bold">
+              ${categories.map(c => `<option value="${c.val}" ${c.val === preselectedCategory ? 'selected' : ''}>${c.label}</option>`).join('')}
+            </select>
+          </div>
+
+          <div id="newMainLocWrap" class="${preselectedCategory.includes('LOKÁCIA') ? '' : 'hidden'}">
+            <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-1">Hlavná lokácia (Areál / Kde parkujeme)</label>
+            <input id="newMainLoc" type="text" value="${escapeHtml(defaultMainLoc)}" placeholder="Napr. Hlavný areál" class="w-full rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 text-xs sm:text-sm font-semibold" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-zinc-400 mb-1">Názov položky / Meno / Podlokácia *</label>
+            <input id="newTitle" type="text" placeholder="${returnToMainLoc ? 'Napr. Kráľovská spálňa / Kuchyňa...' : 'Napr. Historik / Kráľovská sála / Pečený bažant...'}" class="w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-sm" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-bold text-zinc-400 mb-1">Obrazy (nepovinné)</label>
+              <input id="newScenes" type="text" placeholder="Napr. 4/1, 8/1" class="w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-zinc-400 mb-1">${escapeHtml(project.col4Header)}</label>
+              <input id="newLoc" type="text" value="${returnToMainLoc ? 'INT.' : escapeHtml(project.name)}" placeholder="Napr. INT. / ${escapeHtml(project.name)}" class="w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-zinc-400 mb-1">Detaily a produkčné poznámky</label>
+            <textarea id="newDetails" rows="3" placeholder="Podrobnosti, kostýmy vo formáte 1) Názov (obrazy), 2) Názov (obrazy)..." class="w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 p-3 text-sm"></textarea>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('modalFooter').innerHTML = `
+        <button onclick="${returnToMainLoc ? `openMainLocationModal('${escapeHtml(returnToMainLoc)}', false)` : 'closeModal()'}" class="px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-xs font-bold">Zrušiť</button>
+        <div class="flex items-center gap-2">
+          <button onclick="createNewItem(true, '${escapeHtml(returnToMainLoc)}')" class="px-3.5 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 text-xs font-bold">+ Uložiť a ďalšiu</button>
+          <button onclick="createNewItem(false, '${escapeHtml(returnToMainLoc)}')" class="px-4 py-2 rounded-xl bg-amber-500 text-zinc-950 text-xs font-extrabold">Uložiť</button>
+        </div>
+      `;
+
+      showModalOverlay();
+      setTimeout(() => document.getElementById('newTitle')?.focus(), 50);
+    }
+
+    function toggleNewItemMainLocField(val) {
+      const wrap = document.getElementById('newMainLocWrap');
+      if (!wrap) return;
+      if (val.includes('LOKÁCIA')) wrap.classList.remove('hidden');
+      else wrap.classList.add('hidden');
+    }
+
+    function createNewItem(keepOpen = false, returnToMainLoc = '') {
+      const project = getCurrentProject();
+      const rawCat = document.getElementById('newCat').value.trim();
+      const title = document.getElementById('newTitle').value.trim();
+      const scenesRaw = document.getElementById('newScenes').value.trim();
+      const locationOrEp = document.getElementById('newLoc').value.trim();
+      const details = document.getElementById('newDetails').value.trim();
+      const mainLocEl = document.getElementById('newMainLoc');
+      const { group, cleanCategory } = normalizeCategoryAndGroup(rawCat, title, details);
+
+      if (!title) {
+        alert('Zadajte názov položky.');
+        return;
+      }
+
+      const mainLocation = group === 'LOCATIONS'
+        ? ((mainLocEl && mainLocEl.value.trim()) || inferMainLocation(title, locationOrEp, project.name))
+        : '';
+
+      project.items.push({
+        id: `${project.name.replace(/\s+/g, '_')}_custom_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,
+        category: cleanCategory,
+        group,
+        mainLocation,
+        title,
+        scenesRaw,
+        locationOrEp,
+        details,
+        userNotes: '',
+        checked: false
+      });
+
+      saveState();
+      renderApp();
+
+      if (keepOpen) {
+        document.getElementById('newTitle').value = '';
+        document.getElementById('newScenes').value = '';
+        document.getElementById('newDetails').value = '';
+        document.getElementById('newTitle').focus();
+      } else if (returnToMainLoc) {
+        openMainLocationModal(returnToMainLoc, false);
+      } else {
+        closeModal();
+      }
+    }
+
+    // =========================================================================
+    // 18. UTILITY ACTIONS
+    // =========================================================================
+    function showModalOverlay() {
+      const ov = document.getElementById('modalOverlay');
+      ov.classList.remove('hidden');
+      ov.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModalUIOnly() {
+      const ov = document.getElementById('modalOverlay');
+      ov.classList.add('hidden');
+      ov.classList.remove('flex');
+      document.body.style.overflow = '';
+    }
+
+    function closeModal() {
+      closeModalUIOnly();
+      modalStack = [];
+      syncHistoryPush();
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target.id === 'modalOverlay') closeModal();
+    }
+
+    function updateModalBackBtn() {
+      const btn = document.getElementById('modalBackBtn');
+      if (modalStack.length > 1) btn.classList.remove('hidden');
+      else btn.classList.add('hidden');
+    }
+
+    function toggleItemCheck(e, itemId) {
+      e.stopPropagation();
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === itemId);
+      if (item) {
+        item.checked = !item.checked;
+        saveState();
+        renderApp();
+      }
+    }
+
+    function toggleItemCheckInModal(itemId) {
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === itemId);
+      if (item) {
+        item.checked = !item.checked;
+        saveState();
+        renderApp();
+        openItemModal(itemId, false);
+      }
+    }
+
+    function toggleSceneDone(e, sceneCode) {
+      e.stopPropagation();
+      const project = getCurrentProject();
+      if (!project.sceneDone) project.sceneDone = {};
+      project.sceneDone[sceneCode] = !project.sceneDone[sceneCode];
+      saveState();
+      renderApp();
+    }
+
+    function toggleSceneDoneInModal(sceneCode) {
+      const project = getCurrentProject();
+      if (!project.sceneDone) project.sceneDone = {};
+      project.sceneDone[sceneCode] = !project.sceneDone[sceneCode];
+      saveState();
+      renderApp();
+      openSceneModal(sceneCode, false);
+    }
+
+    function saveUserNote(itemId, val) {
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === itemId);
+      if (item) {
+        item.userNotes = val;
+        saveState();
+        renderApp();
+      }
+    }
+
+    function saveItemEdits(itemId) {
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === itemId);
+      if (!item) return;
+      item.title = document.getElementById('editTitle').value.trim();
+      item.scenesRaw = document.getElementById('editScenes').value.trim();
+      item.locationOrEp = document.getElementById('editLoc').value.trim();
+      item.details = document.getElementById('editDetails').value.trim();
+      const mainLocInput = document.getElementById('editMainLoc');
+      if (mainLocInput) item.mainLocation = mainLocInput.value.trim();
+      saveState();
+      renderApp();
+      openItemModal(itemId, false);
+    }
+
+    function deleteItem(itemId) {
+      if (!confirm('Naozaj chcete vymazať túto položku?')) return;
+      const project = getCurrentProject();
+      project.items = project.items.filter(i => i.id !== itemId);
+      saveState();
+      closeModal();
+      renderApp();
+    }
+
+    function setEpisodeFilter(val) {
+      appState.episodeFilter = val;
+      document.getElementById('filterPopoverMenu').classList.add('hidden');
+      renderApp();
+    }
+
+    function setSearchCategoryFilter(val) {
+      appState.searchCategoryFilter = val;
+      document.getElementById('filterPopoverMenu').classList.add('hidden');
+      renderApp();
+    }
+
+    function handleSearch(val) {
+      appState.searchQuery = val;
+      document.getElementById('searchInput').value = val;
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (val) clearBtn.classList.remove('hidden');
+      else clearBtn.classList.add('hidden');
+      renderApp();
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const content = e.target.result;
+        let cleanName = file.name.replace(/\.csv$/i, '').replace(/^Vyrobny_list_/i, '').replace(/_/g, ' ').trim();
+        if (!cleanName) cleanName = 'Nová epizóda';
+        const customName = prompt('Názov výrobného listu (časti):', cleanName);
+        if (!customName) return;
+
+        appState.projects[customName] = parseCSVToProject(customName, content);
+        appState.activeProject = customName;
+        appState.activeTab = 'HOME';
+        appState.episodeFilter = 'ALL';
+        saveState();
+        syncHistoryPush();
+        renderApp();
+      };
+      reader.readAsText(file, 'UTF-8');
+      event.target.value = '';
+    }
+
+    function exportCurrentCSV() {
+      const project = getCurrentProject();
+      if (!project) return;
+      const escapeCSV = (str) => {
+        const s = String(str ?? '');
+        if (s.includes(';') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
+        return s;
+      };
+      const rows = [['KATEGÓRIA', 'POLOŽKA / NÁZOV', 'OBRAZY (SCÉNY)', project.col4Header || 'TYP / LOKALITA', 'DETAILY A PRODUKČNÉ POZNÁMKY']];
+      project.items.forEach(it => {
+        rows.push([
+          it.category,
+          it.title,
+          it.scenesRaw,
+          it.locationOrEp,
+          it.userNotes ? `${it.details} [POZN.: ${it.userNotes}]` : it.details
+        ]);
+      });
+      const csvContent = '\uFEFF' + rows.map(r => r.map(escapeCSV).join(';')).join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Vyrobny_list_${project.name.replace(/\s+/g, '_')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      closeModal();
+    }
+
+    function deleteCurrentProject() {
+      const project = getCurrentProject();
+      if (Object.keys(appState.projects).length <= 1) {
+        return alert('V aplikácii musí zostať aspoň jedna časť.');
+      }
+      if (!confirm(`Naozaj chcete natrvalo odstrániť časť „${project.name}“?`)) return;
+      delete appState.projects[project.name];
+      appState.activeProject = Object.keys(appState.projects)[0];
+      saveState();
+      closeModal();
+      syncHistoryPush();
+      renderApp();
+    }
+
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // Boot
+    loadState();
+    try {
+      history.replaceState({
+        activeProject: appState.activeProject,
+        activeTab: appState.activeTab,
+        locationsSubView: appState.locationsSubView,
+        modalStack: []
+      }, '');
+    } catch (e) {}
+    renderApp();
+  </script>
+</body>
+</html>
