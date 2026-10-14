@@ -38,6 +38,7 @@
     }
     .dropdown-animate { animation: dropdownIn 0.14s ease-out forwards; }
 
+    /* Pre modálne okno (prispôsobuje sa režimu) */
     .script-done-cross {
       position: relative;
     }
@@ -48,12 +49,30 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(to bottom right, transparent calc(50% - 2px), rgba(0, 0, 0, 0.95) calc(50% - 2px), rgba(0, 0, 0, 0.95) calc(50% + 2px), transparent calc(50% + 2px));
+      background: linear-gradient(to bottom right, transparent calc(50% - 3px), rgba(0, 0, 0, 0.95) calc(50% - 3px), rgba(0, 0, 0, 0.95) calc(50% + 3px), transparent calc(50% + 3px));
       pointer-events: none;
-      z-index: 20;
+      z-index: 50;
+      opacity: 1 !important;
     }
     .dark .script-done-cross::after {
-      background: linear-gradient(to bottom right, transparent calc(50% - 2px), rgba(0, 0, 0, 0.95) calc(50% - 2px), rgba(0, 0, 0, 0.95) calc(50% + 2px), transparent calc(50% + 2px));
+      background: linear-gradient(to bottom right, transparent calc(50% - 3px), rgba(255, 255, 255, 0.85) calc(50% - 3px), rgba(255, 255, 255, 0.85) calc(50% + 3px), transparent calc(50% + 3px));
+    }
+
+    /* Vždy striktne čierne pre Full Screen scenár (keďže papier je vždy svetlý) */
+    .script-done-cross-always-black {
+      position: relative;
+    }
+    .script-done-cross-always-black::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom right, transparent calc(50% - 3px), rgba(0, 0, 0, 0.95) calc(50% - 3px), rgba(0, 0, 0, 0.95) calc(50% + 3px), transparent calc(50% + 3px));
+      pointer-events: none;
+      z-index: 50;
+      opacity: 1 !important;
     }
 
     .script-done-cross {
@@ -2847,7 +2866,7 @@
         const isDone = scCode ? !!project.sceneDone?.[scCode] : false;
 
         return `
-          <div id="${escapeHtml(anchorId)}" data-scene-code="${escapeHtml(scCode)}" class="relative pb-8 mb-8 border-b border-zinc-300/80 dark:border-zinc-800 last:border-none transition-all duration-500 ${isDone ? 'opacity-40 grayscale script-done-cross' : ''}">
+          <div id="${escapeHtml(anchorId)}" data-scene-code="${escapeHtml(scCode)}" class="relative pb-8 mb-8 border-b border-zinc-300/80 dark:border-zinc-800 last:border-none transition-all duration-500 ${isDone ? 'opacity-40 grayscale script-done-cross-always-black' : ''}">
             ${scCode ? `
               <button onclick="toggleSceneDoneInScript('${escapeHtml(scCode)}')" class="w-full mb-4 px-4 py-3 rounded-xl font-extrabold text-sm sm:text-base transition flex items-center justify-between shadow-sm ${
                 isDone ? 'bg-emerald-500 text-zinc-950' : 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
