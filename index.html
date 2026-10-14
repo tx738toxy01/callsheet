@@ -1586,18 +1586,12 @@
                     <!-- Structured Costume Cards -->
                     <div class="space-y-2.5">
                       ${costumes.map(c => `
-                        <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/70 dark:border-zinc-800 space-y-2">
-                          <div class="flex items-start justify-between gap-2">
+                        <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/70 dark:border-zinc-800 space-y-2.5">
+                          <div class="flex items-center justify-between gap-2">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-pink-500 text-white text-[11px] font-extrabold uppercase tracking-wider shrink-0">
                               ${ICONS.hanger}
                               <span>Kostým ${escapeHtml(c.num)}</span>
                             </span>
-
-                            ${c.scenesRaw ? `
-                              <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md">
-                                Obrazy: ${escapeHtml(c.scenesRaw)}
-                              </span>
-                            ` : ''}
                           </div>
 
                           <div class="font-bold text-sm text-zinc-900 dark:text-white pl-0.5">
@@ -1605,20 +1599,23 @@
                           </div>
 
                           ${c.discrete.length > 0 ? `
-                            <div class="pt-1 flex flex-wrap items-center gap-1">
-                              <span class="text-[10px] font-bold uppercase text-zinc-400 mr-1 flex items-center gap-1">
-                                ${ICONS.scenesSm}
-                                <span>Preklik na obraz:</span>
-                              </span>
-                              ${c.discrete.slice(0, 10).map(sc => `
-                                <button
-                                  onclick="openSceneModal('${escapeHtml(sc)}')"
-                                  class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 transition"
-                                >
-                                  ${escapeHtml(sc)}
-                                </button>
-                              `).join('')}
-                              ${c.discrete.length > 10 ? `<span class="text-[10px] font-bold text-zinc-400">+${c.discrete.length - 10}</span>` : ''}
+                            <div class="pt-1 flex flex-wrap items-center gap-1.5">
+                              <span class="text-[10px] font-bold uppercase text-zinc-400 mr-0.5">Obrazy:</span>
+                              ${c.discrete.map(sc => {
+                                const scDone = project.sceneDone?.[sc];
+                                return `
+                                  <button
+                                    onclick="openSceneModal('${escapeHtml(sc)}')"
+                                    class="px-2 py-0.5 rounded-md text-[11px] font-extrabold border transition flex items-center gap-1 ${
+                                      scDone
+                                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 text-zinc-800 dark:text-zinc-200'
+                                    }"
+                                  >
+                                    <span>${escapeHtml(sc)}</span>${scDone ? ICONS.check : ''}
+                                  </button>
+                                `;
+                              }).join('')}
                             </div>
                           ` : ''}
                         </div>
@@ -1763,7 +1760,7 @@
 
     function openMainLocationModal(mainLocName, pushHistory = true) {
       const project = getCurrentProject();
-      const { itemScenesMap } = buildSceneCatalog(project);
+      const { sceneMap, itemScenesMap } = buildSceneCatalog(project);
       const locItems = project.items.filter(i => i.group === 'LOCATIONS');
       const mainLocGroups = buildMainLocationsCatalog(project, locItems, itemScenesMap);
       const grp = mainLocGroups.find(g => g.name === mainLocName);
@@ -1788,9 +1785,9 @@
           <span class="font-extrabold shrink-0">${allScenes.length} obrazov</span>
         </div>
 
-        <div class="space-y-2.5">
+        <div class="space-y-3">
           <div class="flex items-center justify-between gap-2">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Podlokácie a miestnosti v tomto areáli</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Podlokácie a miestnosti</span>
             <button
               onclick="openAddItemModal('LOKÁCIA (INT.)', '${escapeHtml(grp.name)}')"
               class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold flex items-center gap-1 transition shadow-2xs"
@@ -1800,38 +1797,55 @@
             </button>
           </div>
 
-          <div class="bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 rounded-2xl divide-y divide-zinc-200/50 dark:divide-zinc-800 overflow-hidden">
-            ${grp.subLocations.map(sub => `
-              <div onclick="openItemModal('${sub.id}')" class="p-3.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition flex items-center justify-between gap-3">
-                <div class="min-w-0">
-                  <div class="font-bold text-xs sm:text-sm text-zinc-900 dark:text-white">${escapeHtml(sub.title)}</div>
-                  <div class="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1 mt-0.5">${escapeHtml(sub.details || 'Bez poznámok')}</div>
+          <div class="space-y-2.5">
+            ${grp.subLocations.map(sub => {
+              const subScenes = itemScenesMap[sub.id] || [];
+              return `
+                <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/70 dark:border-zinc-800 space-y-3">
+                  <div onclick="openItemModal('${sub.id}')" class="cursor-pointer group flex items-start justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                      <div class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-amber-500 transition leading-snug">
+                        ${escapeHtml(sub.title)}
+                      </div>
+                      ${sub.details ? `
+                        <div class="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 mt-1">
+                          ${escapeHtml(sub.details)}
+                        </div>
+                      ` : ''}
+                    </div>
+                    <span class="text-zinc-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition shrink-0 mt-0.5">
+                      ${ICONS.chevronRight}
+                    </span>
+                  </div>
+
+                  ${subScenes.length > 0 ? `
+                    <div class="pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60 flex flex-wrap items-center gap-1.5">
+                      ${subScenes.map(sc => {
+                        const isDone = sceneMap[sc]?.done;
+                        return `
+                          <button
+                            onclick="openSceneModal('${escapeHtml(sc)}')"
+                            class="px-2.5 py-1 rounded-lg text-xs font-extrabold border transition flex items-center gap-1 ${
+                              isDone
+                                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                                : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 text-zinc-800 dark:text-zinc-200'
+                            }"
+                          >
+                            <span>${escapeHtml(sc)}</span>${isDone ? ICONS.check : ''}
+                          </button>
+                        `;
+                      }).join('')}
+                    </div>
+                  ` : ''}
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  <span class="text-xs font-bold px-2 py-0.5 rounded-lg bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200">${escapeHtml(sub.scenesRaw || '—')}</span>
-                  <span class="text-zinc-400">${ICONS.chevronRight}</span>
-                </div>
-              </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         </div>
-
-        ${allScenes.length > 0 ? `
-          <div class="space-y-2">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">Obrazy natáčané v tejto hlavnej lokácii</span>
-            <div class="flex flex-wrap gap-1.5">
-              ${allScenes.map(sc => `
-                <button onclick="openSceneModal('${escapeHtml(sc)}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-zinc-100 dark:bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 border border-zinc-200 dark:border-zinc-700 transition">
-                  Obraz ${escapeHtml(sc)}
-                </button>
-              `).join('')}
-            </div>
-          </div>
-        ` : ''}
       `;
 
       document.getElementById('modalFooter').innerHTML = `
-        <span class="text-[11px] text-zinc-400">Kliknite na podlokáciu pre úpravu alebo detaily</span>
+        <span class="text-[11px] text-zinc-400">Kliknite na podlokáciu pre úpravu alebo na obraz pre jeho detail</span>
         <button onclick="closeModal()" class="px-4 py-1.5 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-xs font-bold">Zavrieť</button>
       `;
 
@@ -1974,16 +1988,12 @@
                 return `
                   <div
                     onclick="openSceneModal('${escapeHtml(sc)}')"
-                    class="group cursor-pointer bg-white dark:bg-zinc-900 border ${
-                      isDone
-                        ? 'border-emerald-500/50 bg-emerald-500/5'
-                        : 'border-zinc-200/80 dark:border-zinc-800/80 hover:border-amber-500'
-                    } rounded-2xl p-3.5 transition flex flex-col justify-between gap-3 shadow-2xs"
+                    class="group cursor-pointer bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 hover:border-amber-500 rounded-2xl p-3.5 transition flex flex-col justify-between gap-3 shadow-2xs relative overflow-hidden ${
+                      isDone ? 'opacity-40 grayscale script-done-cross' : ''
+                    }"
                   >
                     <div class="flex items-center justify-between gap-2">
-                      <span class="text-sm font-extrabold px-2.5 py-0.5 rounded-lg ${
-                        isDone ? 'bg-emerald-500 text-zinc-950' : 'bg-amber-500 text-zinc-950'
-                      }">
+                      <span class="text-sm font-extrabold px-2.5 py-0.5 rounded-lg bg-amber-500 text-zinc-950">
                         ${escapeHtml(sc)}
                       </span>
 
@@ -1992,7 +2002,7 @@
                         title="Označiť obraz ako natočený"
                         class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition ${
                           isDone
-                            ? 'bg-emerald-500 border-emerald-500 text-zinc-950'
+                            ? 'bg-zinc-700 border-zinc-700 text-white'
                             : 'border-zinc-300 dark:border-zinc-700 hover:border-amber-500 text-transparent'
                         }"
                       >${ICONS.check}</button>
@@ -2084,18 +2094,36 @@
           <div class="space-y-2">
             <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">Kostýmy (${parsedCostumes.costumes.length})</span>
             <div class="space-y-2">
-              ${parsedCostumes.costumes.map(c => `
-                <div class="p-3 rounded-2xl bg-pink-500/5 border border-pink-500/20 flex flex-col gap-1.5">
-                  <div class="flex items-center justify-between gap-2">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-pink-500 text-white text-[11px] font-extrabold uppercase">
-                      ${ICONS.hanger}
-                      <span>Kostým ${escapeHtml(c.num)}</span>
-                    </span>
-                    ${c.scenesRaw ? `<span class="text-xs font-bold text-amber-600 dark:text-amber-400">Obrazy: ${escapeHtml(c.scenesRaw)}</span>` : ''}
+              ${parsedCostumes.costumes.map(c => {
+                const cScenes = c.discrete && c.discrete.length > 0 ? c.discrete : Array.from(expandSceneTokens(c.scenesRaw));
+                return `
+                  <div class="p-3.5 rounded-2xl bg-pink-500/5 border border-pink-500/20 space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-pink-500 text-white text-[11px] font-extrabold uppercase">
+                        ${ICONS.hanger}
+                        <span>Kostým ${escapeHtml(c.num)}</span>
+                      </span>
+                    </div>
+                    <div class="font-bold text-sm text-zinc-900 dark:text-white">${escapeHtml(c.name)}</div>${cScenes.length > 0 ? `
+                      <div class="pt-1 flex flex-wrap items-center gap-1.5">
+                        <span class="text-[10px] font-bold uppercase text-zinc-400 mr-0.5">Obrazy:</span>
+                        ${cScenes.map(sc => {
+                          const scDone = sceneMap[sc]?.done;
+                          return `
+                            <button onclick="openSceneModal('${escapeHtml(sc)}')" class="px-2.5 py-1 rounded-lg text-xs font-extrabold border transition flex items-center gap-1 ${
+                              scDone
+                                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                                : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 text-zinc-900 dark:text-zinc-100'
+                            }">
+                              <span>${escapeHtml(sc)}</span>${scDone ? ICONS.check : ''}
+                            </button>
+                          `;
+                        }).join('')}
+                      </div>
+                    ` : ''}
                   </div>
-                  <div class="font-bold text-sm text-zinc-900 dark:text-white">${escapeHtml(c.name)}</div>
-                </div>
-              `).join('')}
+                `;
+              }).join('')}
             </div>
           </div>
         ` : ''}
@@ -2107,27 +2135,62 @@
           </div>
         </div>
 
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Obrazy (${escapeHtml(item.scenesRaw || '—')})</span>
-            <span class="text-[11px] text-zinc-400">Kliknite na obraz pre detail</span>
-          </div>
-          <div class="flex flex-wrap gap-1.5">
-            ${scenes.length > 0 ? scenes.map(sc => {
-              const scDone = sceneMap[sc]?.done;
-              return `
-                <button onclick="openSceneModal('${escapeHtml(sc)}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold border transition flex items-center gap-1.5 ${
-                  scDone
-                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
-                    : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950'
-                }">
-                  <span>${escapeHtml(sc)}</span>
-                  ${scDone ? ICONS.check : ''}
-                </button>
-              `;
-            }).join('') : `<span class="text-xs text-zinc-400">Zatiaľ bez priradeného obrazu</span>`}
-          </div>
-        </div>
+        ${(() => {
+          // Ak postava nemá žiadne kostýmy, zobrazíme klasicky všetky jej obrazy
+          if (parsedCostumes.costumes.length === 0) {
+            return `
+              <div class="space-y-2">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">Obrazy</span>
+                <div class="flex flex-wrap gap-1.5">
+                  ${scenes.length > 0 ? scenes.map(sc => {
+                    const scDone = sceneMap[sc]?.done;
+                    return `
+                      <button onclick="openSceneModal('${escapeHtml(sc)}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold border transition flex items-center gap-1.5 ${
+                        scDone
+                          ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 text-zinc-900 dark:text-zinc-100'
+                      }">
+                        <span>${escapeHtml(sc)}</span>${scDone ? ICONS.check : ''}
+                      </button>
+                    `;
+                  }).join('') : `<span class="text-xs text-zinc-400">Zatiaľ bez priradeného obrazu</span>`}
+                </div>
+              </div>
+            `;
+          }
+
+          // Ak postava má kostýmy, zistíme, či nejaké obrazy neostali "nepokryté"
+          const coveredScenes = new Set();
+          parsedCostumes.costumes.forEach(c => {
+            const list = c.discrete && c.discrete.length > 0 ? c.discrete : Array.from(expandSceneTokens(c.scenesRaw));
+            list.forEach(sc => coveredScenes.add(sc));
+          });
+
+          const uncoveredScenes = scenes.filter(sc => !coveredScenes.has(sc));
+          if (uncoveredScenes.length === 0) return '';
+
+          return `
+            <div class="space-y-2 pt-1">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
+                Ostatné obrazy (bez špecifického kostýmu)
+              </span>
+              <div class="flex flex-wrap gap-1.5">
+                ${uncoveredScenes.map(sc => {
+                  const scDone = sceneMap[sc]?.done;
+                  return `
+                    <button onclick="openSceneModal('${escapeHtml(sc)}')" class="px-2.5 py-1 rounded-lg text-xs font-extrabold border transition flex items-center gap-1 ${
+                      scDone
+                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 text-zinc-900 dark:text-zinc-100'
+                    }">
+                      <span>${escapeHtml(sc)}</span>${scDone ? ICONS.check : ''}
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        })()}
 
         <div class="space-y-1.5">
           <label class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">Vaša poznámka (kontakt, stav, zmena)</label>
@@ -2234,7 +2297,16 @@
 
       document.getElementById('modalTitleWrap').innerHTML = `
         <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">${escapeHtml(project.name)}</span>
-        <h2 class="font-extrabold text-lg sm:text-xl text-zinc-900 dark:text-white">Obraz ${escapeHtml(sceneCode)}</h2>
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <h2 class="font-extrabold text-lg sm:text-xl text-zinc-900 dark:text-white">Obraz ${escapeHtml(sceneCode)}</h2>
+          <button onclick="toggleSceneDoneInModal('${escapeHtml(sceneCode)}')" class="px-3 py-1.5 rounded-xl font-extrabold text-xs transition flex items-center gap-1.5 shrink-0 ${
+            scObj.done
+              ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
+              : 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
+          }">
+            ${scObj.done ? `${ICONS.check}<span>Natočené</span>` : '<span>Označiť ako natočené</span>'}
+          </button>
+        </div>
       `;
 
       const renderScriptPreview = () => {
@@ -2278,20 +2350,6 @@
       };
 
       document.getElementById('modalBody').innerHTML = `
-        <div class="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 p-3.5 rounded-2xl border border-zinc-200/60 dark:border-zinc-800">
-          <div>
-            <div class="text-xs font-bold">Stav obrazu ${escapeHtml(sceneCode)}</div>
-            <div class="text-[11px] text-zinc-400">Započítava sa do percent „Obrazy“</div>
-          </div>
-          <button onclick="toggleSceneDoneInModal('${escapeHtml(sceneCode)}')" class="px-4 py-2 rounded-xl font-extrabold text-xs transition flex items-center gap-1.5 ${
-            scObj.done
-              ? 'bg-emerald-500 text-zinc-950'
-              : 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
-          }">
-            ${scObj.done ? `${ICONS.check}<span>Obraz je natočený</span>` : '<span>Označiť ako natočený</span>'}
-          </button>
-        </div>
-
         ${renderScriptPreview()}${renderGroupList('Lokácia', locs)}
         ${renderGroupList('Účinkujúci na pľaci', cast)}
         ${renderGroupList('Gastro v obraze', gastro)}
