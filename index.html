@@ -1967,10 +1967,10 @@
           <div class="flex flex-wrap items-center justify-between gap-2 px-1">
             <div>
               <h2 class="text-lg sm:text-xl font-extrabold tracking-tight">Obrazy</h2>
-              <p class="text-xs text-zinc-500 dark:text-zinc-400">Kliknite na obraz pre celú zostavu na pľaci. Kruhovým tlačidlom označte natočený obraz.</p>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">Kliknite na obraz pre celú zostavu na pľaci a označenie natočeného obrazu.</p>
             </div>
             <div class="text-xs font-extrabold px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
-              Natočené: ${doneCount} / ${filteredScenes.length}
+              Natočené: ${doneCount} /${filteredScenes.length}
             </div>
           </div>
 
@@ -2001,16 +2001,7 @@
                       <span class="text-sm font-extrabold px-2.5 py-0.5 rounded-lg bg-amber-500 text-zinc-950">
                         ${escapeHtml(sc)}
                       </span>
-
-                      <button
-                        onclick="toggleSceneDone(event, '${escapeHtml(sc)}')"
-                        title="Označiť obraz ako natočený"
-                        class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition ${
-                          isDone
-                            ? 'bg-zinc-700 border-zinc-700 text-white'
-                            : 'border-zinc-300 dark:border-zinc-700 hover:border-amber-500 text-transparent'
-                        }"
-                      >${ICONS.check}</button>
+                      ${isDone ? `<span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Natočené</span>` : ''}
                     </div>
 
                     <div>
@@ -3243,11 +3234,11 @@ let scriptFontSize = 16;
       return `
         <div
           id="sticky-dom-${escapeHtml(st.id)}"
-          style="left: ${st.x}%; top: ${st.y}px;"
-          onclick="activateStickyText(event, '${escapeHtml(st.id)}')"
+          style="left: ${st.x}%; top: ${st.y}px; touch-action: none; -webkit-user-select: none; user-select: none;"
+          onclick="event.stopPropagation()"
           onpointerdown="handleStickyPointerDown(event, '${escapeHtml(itemId)}', '${escapeHtml(st.id)}')"
           class="pointer-events-auto absolute w-48 sm:w-56 min-h-[115px] rounded-2xl border-2 shadow-lg p-3 flex items-center justify-center transition-shadow hover:shadow-2xl group cursor-move select-none ${colorCls}"
-          title="Ťahaním posuniete • Kliknutím píšete"
+          title="Ťahaním posuniete • Ťuknutím píšete"
         >
           <textarea
             id="sticky-text-${escapeHtml(st.id)}"
@@ -3262,21 +3253,16 @@ let scriptFontSize = 16;
           
           <button
             id="sticky-del-${escapeHtml(st.id)}"
+            onpointerdown="event.stopPropagation()"
             onclick="event.stopPropagation(); deleteStickyNote('${escapeHtml(itemId)}', '${escapeHtml(st.id)}')"
-            class="hidden absolute -top-2 -right-2 w-5 h-5 rounded-full bg-zinc-900 text-white text-[10px] font-extrabold items-center justify-center transition shadow-md cursor-pointer"
+            class="hidden absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-zinc-900 text-white text-xs font-extrabold items-center justify-center transition shadow-md cursor-pointer z-20"
           >×</button>
         </div>
       `;
     }
 
-    let stickyWasDragged = false;
-
     function activateStickyText(e, stickyId) {
-      e.stopPropagation();
-      if (stickyWasDragged) {
-        stickyWasDragged = false;
-        return;
-      }
+      if (e && e.stopPropagation) e.stopPropagation();
       const ta = document.getElementById(`sticky-text-${stickyId}`);
       const delBtn = document.getElementById(`sticky-del-${stickyId}`);
       if (ta) {
@@ -3301,8 +3287,10 @@ let scriptFontSize = 16;
       ta.classList.remove('cursor-text');
       const delBtn = document.getElementById(`sticky-del-${stickyId}`);
       if (delBtn) {
-        delBtn.classList.add('hidden');
-        delBtn.classList.remove('flex');
+        setTimeout(() => {
+          delBtn.classList.add('hidden');
+          delBtn.classList.remove('flex');
+        }, 120);
       }
       if (ta.value !== stickyOldTextBeforeEdit) {
         pushScriptAction({
@@ -3316,8 +3304,8 @@ let scriptFontSize = 16;
     }
 
     function handleStickyPointerDown(e, itemId, stickyId) {
+      if (e.target.closest('button')) return;
       const ta = document.getElementById(`sticky-text-${stickyId}`);
-      // Ak je text už aktívny a fokusnutý, necháme ho písať
       if (ta && document.activeElement === ta) return;
       startDragSticky(e, itemId, stickyId);
     }
@@ -3327,7 +3315,6 @@ let scriptFontSize = 16;
       const item = project.items.find(i => i.id === itemId);
       if (!item) return;
       item.customHtml = el.innerHTML;
-      // Uložíme aj čistý text pre náhľad v modálnom okne obrazu
       const paragraphs = Array.from(el.querySelectorAll('p')).map(p => p.innerText.trim()).filter(Boolean);
       if (paragraphs.length > 0) {
         item.details = paragraphs.join(' || ');
@@ -3348,7 +3335,7 @@ let scriptFontSize = 16;
       if (!area) return;
 
       const rect = area.getBoundingClientRect();
-      const xPct = Math.max(1, Math.min(85, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
+      const xPct = Math.max(1, Math.min(82, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
       const yPx = Math.max(5, Math.round(e.clientY - rect.top));
 
       const project = getCurrentProject();
@@ -3381,8 +3368,8 @@ let scriptFontSize = 16;
       setScriptToolMode('READ');
 
       setTimeout(() => {
-        activateStickyText(new Event('click'), newSticky.id);
-      }, 40);
+        activateStickyText(null, newSticky.id);
+      }, 50);
     }
 
     function handleStickyInput(itemId, stickyId, ta) {
@@ -3424,11 +3411,15 @@ let scriptFontSize = 16;
     function startDragSticky(e, itemId, stickyId) {
       e.preventDefault();
       e.stopPropagation();
-      stickyWasDragged = false;
 
       const domEl = document.getElementById(`sticky-dom-${stickyId}`);
       const parentEl = document.getElementById(`script-stickies-${itemId}`);
       if (!domEl || !parentEl) return;
+
+      const activePointerId = e.pointerId;
+      try {
+        domEl.setPointerCapture(activePointerId);
+      } catch (err) {}
 
       const parentRect = parentEl.getBoundingClientRect();
       const startX = e.clientX;
@@ -3446,69 +3437,86 @@ let scriptFontSize = 16;
       domEl.style.zIndex = '999';
 
       const onMove = (moveEv) => {
-        const dxPct = ((moveEv.clientX - startX) / parentRect.width) * 100;
+        if (moveEv.pointerId !== activePointerId) return;
+        moveEv.preventDefault();
+        const dxPx = moveEv.clientX - startX;
         const dyPx = moveEv.clientY - startY;
-        if (Math.abs(dxPct) > 0.5 || Math.abs(dyPx) > 3) {
-          moved = true;
-          stickyWasDragged = true;
-        }
-        st.x = Math.max(-5, Math.min(88, Math.round(origX + dxPct)));
-        st.y = Math.round(origY + dyPx);
-        domEl.style.left = `${st.x}%`;
-        domEl.style.top = `${st.y}px`;
-      };
 
-      const onUp = () => {
-        window.removeEventListener('pointermove', onMove);
-        window.removeEventListener('pointerup', onUp);
-        domEl.style.zIndex = '';
+        if (!moved && Math.hypot(dxPx, dyPx) > 6) {
+          moved = true;
+          if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') {
+            document.activeElement.blur();
+          }
+        }
 
         if (moved) {
-          const stickyRect = domEl.getBoundingClientRect();
-          const stickyCenterY = stickyRect.top + stickyRect.height / 2;
-          let targetItemId = itemId;
-          let finalY = st.y;
-
-          document.querySelectorAll('.script-block-container').forEach(block => {
-            const bRect = block.getBoundingClientRect();
-            if (stickyCenterY >= bRect.top && stickyCenterY <= bRect.bottom) {
-              const candidateId = block.getAttribute('data-item-id');
-              const candidateArea = document.getElementById(`script-annot-area-${candidateId}`);
-              if (candidateId && candidateArea) {
-                targetItemId = candidateId;
-                const areaRect = candidateArea.getBoundingClientRect();
-                finalY = Math.round(stickyRect.top - areaRect.top);
-              }
-            }
-          });
-
-          if (targetItemId !== itemId) {
-            const targetItem = project.items.find(i => i.id === targetItemId);
-            if (targetItem) {
-              item.stickyNotes = item.stickyNotes.filter(s => s.id !== stickyId);
-              if (!targetItem.stickyNotes) targetItem.stickyNotes = [];
-              st.y = finalY;
-              targetItem.stickyNotes.push(st);
-              refreshStickiesDOM(itemId);
-              refreshStickiesDOM(targetItemId);
-            }
-          }
-
-          pushScriptAction({
-            type: 'STICKY_MOVE',
-            itemId,
-            targetItemId,
-            stickyId,
-            from: { x: origX, y: origY },
-            to: { x: st.x, y: st.y }
-          });
-          saveState();
-          setTimeout(() => { stickyWasDragged = false; }, 80);
+          const dxPct = (dxPx / (parentRect.width || 600)) * 100;
+          st.x = Math.max(-5, Math.min(88, Math.round(origX + dxPct)));
+          st.y = Math.round(origY + dyPx);
+          domEl.style.left = `${st.x}%`;
+          domEl.style.top = `${st.y}px`;
         }
       };
 
-      window.addEventListener('pointermove', onMove);
-      window.addEventListener('pointerup', onUp);
+      const onEnd = (endEv) => {
+        if (endEv.pointerId !== activePointerId) return;
+        domEl.removeEventListener('pointermove', onMove);
+        domEl.removeEventListener('pointerup', onEnd);
+        domEl.removeEventListener('pointercancel', onEnd);
+        try {
+          domEl.releasePointerCapture(activePointerId);
+        } catch (err) {}
+        domEl.style.zIndex = '';
+
+        if (!moved) {
+          activateStickyText(endEv, stickyId);
+          return;
+        }
+
+        const stickyRect = domEl.getBoundingClientRect();
+        const stickyCenterY = stickyRect.top + stickyRect.height / 2;
+        let targetItemId = itemId;
+        let finalY = st.y;
+
+        document.querySelectorAll('.script-block-container').forEach(block => {
+          const bRect = block.getBoundingClientRect();
+          if (stickyCenterY >= bRect.top && stickyCenterY <= bRect.bottom) {
+            const candidateId = block.getAttribute('data-item-id');
+            const candidateArea = document.getElementById(`script-annot-area-${candidateId}`);
+            if (candidateId && candidateArea) {
+              targetItemId = candidateId;
+              const areaRect = candidateArea.getBoundingClientRect();
+              finalY = Math.round(stickyRect.top - areaRect.top);
+            }
+          }
+        });
+
+        if (targetItemId !== itemId) {
+          const targetItem = project.items.find(i => i.id === targetItemId);
+          if (targetItem) {
+            item.stickyNotes = item.stickyNotes.filter(s => s.id !== stickyId);
+            if (!targetItem.stickyNotes) targetItem.stickyNotes = [];
+            st.y = finalY;
+            targetItem.stickyNotes.push(st);
+            refreshStickiesDOM(itemId);
+            refreshStickiesDOM(targetItemId);
+          }
+        }
+
+        pushScriptAction({
+          type: 'STICKY_MOVE',
+          itemId,
+          targetItemId,
+          stickyId,
+          from: { x: origX, y: origY },
+          to: { x: st.x, y: st.y }
+        });
+        saveState();
+      };
+
+      domEl.addEventListener('pointermove', onMove);
+      domEl.addEventListener('pointerup', onEnd);
+      domEl.addEventListener('pointercancel', onEnd);
     }
 
     function initAllScriptCanvases() {
@@ -3534,30 +3542,35 @@ let scriptFontSize = 16;
       });
     }
 
+    function applyStrokeStyleToContext(ctx, stroke) {
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      if (stroke.mode === 'ERASER') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 24;
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
+      } else if (stroke.mode === 'HIGHLIGHT') {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 0.35;
+        ctx.lineWidth = stroke.size * 4.5;
+        ctx.strokeStyle = stroke.color;
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = stroke.size;
+        ctx.strokeStyle = stroke.color;
+      }
+    }
+
     function redrawCanvasStrokes(canvas, strokes) {
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
 
       (strokes || []).forEach(stroke => {
         if (!stroke.points || stroke.points.length === 0) return;
         ctx.save();
-        if (stroke.mode === 'ERASER') {
-          ctx.globalCompositeOperation = 'destination-out';
-          ctx.lineWidth = 22;
-          ctx.strokeStyle = 'rgba(0,0,0,1)';
-        } else if (stroke.mode === 'HIGHLIGHT') {
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.globalAlpha = 0.35;
-          ctx.lineWidth = stroke.size * 4.5;
-          ctx.strokeStyle = stroke.color;
-        } else {
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.globalAlpha = 1;
-          ctx.lineWidth = stroke.size;
-          ctx.strokeStyle = stroke.color;
-        }
+        applyStrokeStyleToContext(ctx, stroke);
 
         ctx.beginPath();
         stroke.points.forEach((pt, idx) => {
@@ -3580,51 +3593,108 @@ let scriptFontSize = 16;
       if (canvas.dataset.bound === '1') return;
       canvas.dataset.bound = '1';
 
-      let isDown = false;
+      let activePointerId = null;
       let currentStroke = null;
+      let cachedRect = null;
 
-      const getPos = (e) => {
-        const r = canvas.getBoundingClientRect();
+      const getPosFromRect = (clientX, clientY, r) => {
         return {
-          x: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)),
-          y: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height))
+          x: Math.max(0, Math.min(1, (clientX - r.left) / (r.width || 1))),
+          y: Math.max(0, Math.min(1, (clientY - r.top) / (r.height || 1)))
         };
       };
 
       canvas.addEventListener('pointerdown', (e) => {
         if (!['PEN', 'HIGHLIGHT', 'ERASER'].includes(scriptToolState.mode)) return;
+        if (activePointerId !== null) return;
+
         e.preventDefault();
         e.stopPropagation();
-        canvas.setPointerCapture(e.pointerId);
-        isDown = true;
+
+        activePointerId = e.pointerId;
+        cachedRect = canvas.getBoundingClientRect();
+        try {
+          canvas.setPointerCapture(activePointerId);
+        } catch (err) {}
 
         const project = getCurrentProject();
         const item = project.items.find(i => i.id === itemId);
-        if (!item) return;
+        if (!item) {
+          activePointerId = null;
+          return;
+        }
         if (!item.strokes) item.strokes = [];
 
+        const startPt = getPosFromRect(e.clientX, e.clientY, cachedRect);
         currentStroke = {
           mode: scriptToolState.mode,
           color: scriptToolState.color,
           size: scriptToolState.size,
-          points: [getPos(e)]
+          points: [startPt]
         };
         item.strokes.push(currentStroke);
-        redrawCanvasStrokes(canvas, item.strokes);
-      });
+
+        const ctx = canvas.getContext('2d');
+        ctx.save();
+        applyStrokeStyleToContext(ctx, currentStroke);
+        ctx.beginPath();
+        const px = startPt.x * canvas.width;
+        const py = startPt.y * canvas.height;
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + 0.5, py + 0.5);
+        ctx.stroke();
+        ctx.restore();
+      }, { passive: false });
 
       canvas.addEventListener('pointermove', (e) => {
-        if (!isDown || !currentStroke) return;
+        if (e.pointerId !== activePointerId || !currentStroke) return;
         e.preventDefault();
-        currentStroke.points.push(getPos(e));
-        const project = getCurrentProject();
-        const item = project.items.find(i => i.id === itemId);
-        if (item) redrawCanvasStrokes(canvas, item.strokes);
-      });
+        e.stopPropagation();
 
-      const finishStroke = () => {
-        if (!isDown) return;
-        isDown = false;
+        const r = cachedRect || canvas.getBoundingClientRect();
+        const events = (typeof e.getCoalescedEvents === 'function') ? e.getCoalescedEvents() : [e];
+        const ctx = canvas.getContext('2d');
+
+        if (currentStroke.mode === 'HIGHLIGHT') {
+          events.forEach(ev => {
+            const pt = getPosFromRect(ev.clientX, ev.clientY, r);
+            const prev = currentStroke.points[currentStroke.points.length - 1];
+            if (!prev || Math.hypot(pt.x - prev.x, pt.y - prev.y) > 0.0015) {
+              currentStroke.points.push(pt);
+            }
+          });
+          const project = getCurrentProject();
+          const item = project.items.find(i => i.id === itemId);
+          if (item) redrawCanvasStrokes(canvas, item.strokes);
+          return;
+        }
+
+        ctx.save();
+        applyStrokeStyleToContext(ctx, currentStroke);
+        ctx.beginPath();
+
+        events.forEach(ev => {
+          const prev = currentStroke.points[currentStroke.points.length - 1];
+          const pt = getPosFromRect(ev.clientX, ev.clientY, r);
+          if (!prev || Math.hypot(pt.x - prev.x, pt.y - prev.y) > 0.0008) {
+            currentStroke.points.push(pt);
+            ctx.moveTo(prev.x * canvas.width, prev.y * canvas.height);
+            ctx.lineTo(pt.x * canvas.width, pt.y * canvas.height);
+          }
+        });
+
+        ctx.stroke();
+        ctx.restore();
+      }, { passive: false });
+
+      const finishStroke = (e) => {
+        if (e.pointerId !== activePointerId) return;
+        try {
+          canvas.releasePointerCapture(activePointerId);
+        } catch (err) {}
+        activePointerId = null;
+        cachedRect = null;
+
         if (currentStroke) {
           pushScriptAction({ type: 'STROKE', itemId, stroke: currentStroke });
         }
