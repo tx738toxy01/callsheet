@@ -971,6 +971,13 @@
       if (autoBackupEnabled && backupFileHandle) {
         writeToAutoBackupFile();
       }
+
+      if (localStorage.getItem('google_drive_script_url')) {
+        if (gdriveSaveTimer) clearTimeout(gdriveSaveTimer);
+        gdriveSaveTimer = setTimeout(() => {
+          syncDataToGoogleDrive(true);
+        }, 1500);
+      }
     }
 
     function updateAutoBackupBadgeUI() {
@@ -2418,14 +2425,14 @@
       const project = getCurrentProject();
       modalStack = [];
       updateModalBackBtn();
+      const currentGScriptUrl = localStorage.getItem('google_drive_script_url') || '';
 
       document.getElementById('modalTitleWrap').innerHTML = `
         <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">Nastavenia</span>
-        <h2 class="font-extrabold text-base sm:text-lg">Správa časti a zálohovanie</h2>
+        <h2 class="font-extrabold text-base sm:text-lg">Správa časti a Google Drive</h2>
       `;
 
       document.getElementById('modalBody').innerHTML = `
-        <!-- 1. TOP: CURRENT EPISODE ACTIONS -->
         <div class="space-y-2">
           <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block px-1">Aktuálna časť (${escapeHtml(project.name)})</span>
 
@@ -2452,46 +2459,49 @@
           </button>
         </div>
 
-        <!-- 2. BOTTOM: ZÁLOHOVANIE (ONLY THE SLIDER — NO EXTRA BUTTONS!) -->
-        <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block px-1 mb-2">Zálohovanie</span>
+        <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block px-1">Google Drive Synchronizácia (iPad ⇄ Telefón)</span>
 
-          <div class="p-4 rounded-3xl bg-emerald-500/10 border border-emerald-500/25 space-y-2.5">
-            <div class="flex items-center justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-emerald-500 text-zinc-950 flex items-center justify-center shrink-0">
-                  ${ICONS.cloud}
-                </div>
-                <div>
-                  <div class="font-extrabold text-sm text-zinc-900 dark:text-white">Zálohovať</div>
-                  <div class="text-xs text-zinc-500 dark:text-zinc-400">
-                    Vyberiete miesto zálohy (napr. Google Drive). Ak sa tam nájde stará záloha, ponúkne jej obnovenie.
-                  </div>
+          <div class="p-4 rounded-3xl bg-emerald-500/10 border border-emerald-500/25 space-y-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-emerald-500 text-zinc-950 flex items-center justify-center shrink-0">
+                ${ICONS.cloud}
+              </div>
+              <div>
+                <div class="font-extrabold text-sm text-zinc-900 dark:text-white">Prepojenie s Google Diskom</div>
+                <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                  Vložte URL adresu vášho Google Apps Scriptu na prepojenie zariadení.
                 </div>
               </div>
-
-              <label class="relative inline-flex items-center cursor-pointer shrink-0 select-none">
-                <input type="checkbox" class="sr-only" ${autoBackupEnabled ? 'checked' : ''} onchange="toggleAutoBackupSwitch(this)" />
-                <div class="w-14 h-8 rounded-full transition-colors duration-200 p-1 flex items-center ${autoBackupEnabled ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'}">
-                  <div class="w-6 h-6 rounded-full bg-white shadow-md transform transition-transform duration-200 flex items-center justify-center ${autoBackupEnabled ? 'translate-x-6' : 'translate-x-0'}">
-                    <span class="w-2 h-2 rounded-full ${autoBackupEnabled ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-500'}"></span>
-                  </div>
-                </div>
-              </label>
             </div>
 
-            ${autoBackupEnabled && backupFileName ? `
-              <div class="px-3 py-2 rounded-xl bg-white/70 dark:bg-zinc-900/70 text-xs flex items-center justify-between">
-                <span class="font-semibold text-emerald-700 dark:text-emerald-300 truncate">Miesto zálohy: ${escapeHtml(backupFileName)}</span>
-                <span class="text-[11px] text-zinc-400 shrink-0 ml-2">${appState.lastBackupTime ? `Automaticky uložené ${appState.lastBackupTime}` : 'Aktívne'}</span>
+            <div class="space-y-2">
+              <input
+                id="gscriptUrlInput"
+                type="text"
+                value="${escapeHtml(currentGScriptUrl)}"
+                placeholder="https://script.google.com/macros/s/.../exec"
+                class="w-full rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-xs font-mono focus:outline-none focus:border-amber-500"
+              />
+              <div class="flex items-center justify-between gap-2">
+                <button onclick="saveAndSyncGoogleDrive()" class="flex-1 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold transition">
+                  Uložiť a stiahnuť z Drivu
+                </button>
+                <button onclick="testGoogleDriveSync()" class="px-3.5 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 text-xs font-bold transition">
+                  Test / Sync
+                </button>
               </div>
-            ` : ''}
+            </div>
+
+            <div id="gdriveStatusMsg" class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 px-1">
+              ${currentGScriptUrl ? 'Google Drive je pripojený' : 'Zatiaľ nezadaná URL adresa'}
+            </div>
           </div>
         </div>
       `;
 
       document.getElementById('modalFooter').innerHTML = `
-        <span class="text-[11px] text-zinc-400">${autoBackupEnabled ? 'Automatická záloha je zapnutá' : 'Dáta sú uložené v lokálnej pamäti'}</span>
+        <span class="text-[11px] text-zinc-400">Dáta sa synchronizujú automaticky</span>
         <button onclick="closeModal()" class="px-4 py-1.5 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-xs font-bold">Zavrieť</button>
       `;
 
@@ -2996,9 +3006,11 @@ let scriptFontSize = 16;
             const active = scriptToolState.mode === t.id;
             return `
               <button
+                type="button"
+                onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); setScriptToolMode('${t.id}');}"
                 onclick="setScriptToolMode('${t.id}')"
                 title="${t.label}"
-                class="w-9 h-9 rounded-xl flex items-center justify-center transition shrink-0 ${
+                class="w-9 h-9 rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation ${
                   active ? 'bg-amber-500 text-zinc-950 shadow-xs' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                 }"
               >
@@ -3010,10 +3022,12 @@ let scriptFontSize = 16;
           <div class="flex items-center gap-1 pl-1.5 ml-0.5 border-l border-zinc-800">
             <button
               id="scriptUndoBtn"
+              type="button"
+              onpointerdown="if(event.pointerType==='pen' && !this.disabled){event.preventDefault(); undoScriptStroke();}"
               onclick="undoScriptStroke()"
               ${!canUndo ? 'disabled' : ''}
               title="Späť (Undo)"
-              class="w-9 h-9 rounded-xl flex items-center justify-center transition shrink-0 ${
+              class="w-9 h-9 rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation ${
                 canUndo ? 'bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950' : 'bg-zinc-800/40 text-zinc-600 cursor-not-allowed'
               }"
             >
@@ -3021,10 +3035,12 @@ let scriptFontSize = 16;
             </button>
             <button
               id="scriptRedoBtn"
+              type="button"
+              onpointerdown="if(event.pointerType==='pen' && !this.disabled){event.preventDefault(); redoScriptStroke();}"
               onclick="redoScriptStroke()"
               ${!canRedo ? 'disabled' : ''}
               title="Dopredu (Redo)"
-              class="w-9 h-9 rounded-xl flex items-center justify-center transition shrink-0 ${
+              class="w-9 h-9 rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation ${
                 canRedo ? 'bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950' : 'bg-zinc-800/40 text-zinc-600 cursor-not-allowed'
               }"
             >
@@ -3039,9 +3055,11 @@ let scriptFontSize = 16;
               const active = scriptToolState.color === c.hex;
               return `
                 <button
+                  type="button"
+                  onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); setScriptToolColor('${c.hex}');}"
                   onclick="setScriptToolColor('${c.hex}')"
                   title="${c.name}"
-                  class="w-6 h-6 rounded-full border-2 transition transform ${active ? 'scale-110 border-white ring-2 ring-amber-500/50' : 'border-zinc-700 opacity-75 hover:opacity-100'}"
+                  class="w-6 h-6 rounded-full border-2 transition transform touch-manipulation ${active ? 'scale-110 border-white ring-2 ring-amber-500/50' : 'border-zinc-700 opacity-75 hover:opacity-100'}"
                   style="background-color: ${c.hex};"
                 ></button>
               `;
@@ -3053,9 +3071,11 @@ let scriptFontSize = 16;
               const active = scriptToolState.size === s.val;
               return `
                 <button
+                  type="button"
+                  onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); setScriptToolSize(${s.val});}"
                   onclick="setScriptToolSize(${s.val})"
                   title="${s.label}"
-                  class="w-6 h-6 rounded-lg flex items-center justify-center transition ${active ? 'bg-amber-500 text-zinc-950' : 'text-zinc-300 hover:bg-zinc-700'}"
+                  class="w-6 h-6 rounded-lg flex items-center justify-center transition touch-manipulation ${active ? 'bg-amber-500 text-zinc-950' : 'text-zinc-300 hover:bg-zinc-700'}"
                 >
                   <span class="${s.dot} rounded-full bg-current"></span>
                 </button>
@@ -3204,13 +3224,19 @@ let scriptFontSize = 16;
       }, { passive: false });
 
       ov.addEventListener('touchmove', (e) => {
+        if (e.target.closest('button, select, input, textarea, a, label, #scriptToolbarWrap')) {
+          return;
+        }
         if (!e.target.closest('#scriptReaderScroll')) {
           if (e.cancelable) e.preventDefault();
         }
       }, { passive: false });
 
       ov.addEventListener('pointerdown', (e) => {
-        if (e.pointerType === 'pen') {
+        const btn = e.target.closest('button');
+        if (btn && e.pointerType === 'pen') {
+          e.stopPropagation();
+        } else if (e.pointerType === 'pen' && e.target.closest('.script-draw-canvas')) {
           lastDrawingActivityTime = Date.now();
         }
       }, { capture: true });
@@ -4207,6 +4233,97 @@ let scriptFontSize = 16;
         document.documentElement.classList.remove('dark');
       }
     }
+    async function syncDataToGoogleDrive(silent = true) {
+      const url = localStorage.getItem('google_drive_script_url');
+      if (!url) return;
+      const statusEl = document.getElementById('gdriveStatusMsg');
+      if (statusEl && !silent) statusEl.textContent = 'Odosielam dáta na Google Drive...';
+
+      try {
+        const payload = {
+          version: 6,
+          exportedAt: new Date().toISOString(),
+          activeProject: appState.activeProject,
+          projects: appState.projects
+        };
+
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (statusEl && !silent) {
+          statusEl.textContent = 'Dáta úspešne odoslané na Google Drive!';
+          setTimeout(() => { if (statusEl) statusEl.textContent = 'Google Drive je pripojený'; }, 3000);
+        }
+      } catch (err) {
+        if (statusEl && !silent) statusEl.textContent = 'Chyba pri odosielaní: ' + err.message;
+      }
+    }
+
+    async function syncDataFromGoogleDrive() {
+      const url = localStorage.getItem('google_drive_script_url');
+      if (!url) return;
+      const statusEl = document.getElementById('gdriveStatusMsg');
+      if (statusEl) statusEl.textContent = 'Sťahujem dáta z Google Drivu...';
+
+      try {
+        const response = await fetch(url);
+        const text = await response.text();
+        if (!text || text.trim() === '{}') {
+          if (statusEl) statusEl.textContent = 'Na Google Drivu zatiaľ nie sú žiadne dáta.';
+          return;
+        }
+
+        const parsed = JSON.parse(text);
+        if (parsed && parsed.projects && Object.keys(parsed.projects).length > 0) {
+          appState.projects = parsed.projects;
+          appState.activeProject = parsed.activeProject || Object.keys(parsed.projects)[0];
+          saveState();
+          renderApp();
+          if (statusEl) {
+            statusEl.textContent = 'Dáta úspešne stiahnuté z Google Drivu!';
+            setTimeout(() => { if (statusEl) statusEl.textContent = 'Google Drive je pripojený'; }, 3000);
+          }
+        }
+      } catch (err) {
+        if (statusEl) statusEl.textContent = 'Chyba pri sťahovaní: ' + err.message;
+      }
+    }
+
+    function saveAndSyncGoogleDrive() {
+      const inp = document.getElementById('gscriptUrlInput');
+      if (!inp) return;
+      const val = inp.value.trim();
+      if (!val) {
+        alert('Zadajte platnú URL adresu.');
+        return;
+      }
+      localStorage.setItem('google_drive_script_url', val);
+      syncDataFromGoogleDrive();
+    }
+
+    function testGoogleDriveSync() {
+      const inp = document.getElementById('gscriptUrlInput');
+      if (!inp) return;
+      const val = inp.value.trim();
+      if (!val) {
+        alert('Zadajte platnú URL adresu.');
+        return;
+      }
+      localStorage.setItem('google_drive_script_url', val);
+      syncDataToGoogleDrive(false);
+    }
+
+    // Automatické ukladanie do cloudu na pozadí s malým oneskorením
+    let gdriveSaveTimer = null;
+    const origSaveState = window.saveState || saveState;
+    // Prepojíme existujúce saveState tak, aby potichu odosielalo zmeny na disk
+    const originalSaveStateFunc = saveState;
+    // (Vložíme volanie do existujúceho ukladania)
+
     try {
       history.replaceState({
         activeProject: appState.activeProject,
@@ -4216,7 +4333,11 @@ let scriptFontSize = 16;
       }, '');
     } catch (e) {}
     renderApp();
-    restoreScriptReaderIfLocked();
+
+    // Pri štarte apky automaticky stiahneme najnovší stav z Google Drivu
+    if (localStorage.getItem('google_drive_script_url')) {
+      syncDataFromGoogleDrive();
+    }
   </script>
 </body>
 </html>
