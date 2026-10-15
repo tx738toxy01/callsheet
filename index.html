@@ -309,7 +309,7 @@
     <div id="mainContent"></div>
   </main>
 
-  <div id="scriptReaderOverlay" class="fixed inset-0 z-[60] bg-zinc-900/95 backdrop-blur-md hidden flex-col">
+  <div id="scriptReaderOverlay" class="fixed inset-0 z-[60] bg-zinc-950 hidden flex-col" style="-webkit-touch-callout: none; -webkit-user-select: none; user-select: none;">
     <div class="bg-zinc-900 border-b border-zinc-800 px-3 sm:px-6 py-2 flex flex-col gap-2 text-zinc-100 shrink-0">
       <!-- Top Row: Navigation & Font Size -->
       <div class="flex items-center justify-between gap-2">
@@ -2948,9 +2948,9 @@ let scriptFontSize = 16;
             `;
           }).join('')}
 
-          <!-- Undo / Redo tlačidlá -->
           <div class="flex items-center gap-1 pl-1.5 ml-1 border-l border-zinc-800">
             <button
+              id="scriptUndoBtn"
               onclick="undoScriptStroke()"
               ${!canUndo ? 'disabled' : ''}
               title="Späť (Undo)"
@@ -2961,6 +2961,7 @@ let scriptFontSize = 16;
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
             </button>
             <button
+              id="scriptRedoBtn"
               onclick="redoScriptStroke()"
               ${!canRedo ? 'disabled' : ''}
               title="Dopredu (Redo)"
@@ -3064,13 +3065,14 @@ let scriptFontSize = 16;
       });
 
       document.querySelectorAll('.script-editable-content').forEach(el => {
-        el.contentEditable = isText ? 'true' : 'false';
         if (isText) {
+          el.setAttribute('contenteditable', 'true');
           el.classList.add('ring-2', 'ring-amber-500/40', 'bg-amber-500/5', 'rounded-lg', 'p-2', '-m-2');
           el.style.cursor = 'text';
           el.style.userSelect = 'text';
           el.style.webkitUserSelect = 'text';
         } else {
+          el.removeAttribute('contenteditable');
           el.classList.remove('ring-2', 'ring-amber-500/40', 'bg-amber-500/5', 'rounded-lg', 'p-2', '-m-2');
           el.style.cursor = isSticky ? 'copy' : 'default';
           el.style.userSelect = isDrawing ? 'none' : '';
@@ -3323,10 +3325,39 @@ let scriptFontSize = 16;
       renderApp();
     }
 
+    let drawingSaveTimer = null;
+    function scheduleDrawingSaveState() {
+      if (drawingSaveTimer) clearTimeout(drawingSaveTimer);
+      drawingSaveTimer = setTimeout(() => {
+        drawingSaveTimer = null;
+        saveState();
+      }, 650);
+    }
+
+    function updateUndoRedoButtonsUI() {
+      const undoBtn = document.getElementById('scriptUndoBtn');
+      const redoBtn = document.getElementById('scriptRedoBtn');
+      const canUndo = scriptUndoStack.length > 0;
+      const canRedo = scriptRedoStack.length > 0;
+      const activeCls = ['bg-zinc-800', 'text-zinc-200', 'hover:bg-amber-500', 'hover:text-zinc-950'];
+      const disabledCls = ['bg-zinc-800/40', 'text-zinc-600', 'cursor-not-allowed'];
+
+      if (undoBtn) {
+        undoBtn.disabled = !canUndo;
+        undoBtn.classList.remove(...activeCls, ...disabledCls);
+        undoBtn.classList.add(...(canUndo ? activeCls : disabledCls));
+      }
+      if (redoBtn) {
+        redoBtn.disabled = !canRedo;
+        redoBtn.classList.remove(...activeCls, ...disabledCls);
+        redoBtn.classList.add(...(canRedo ? activeCls : disabledCls));
+      }
+    }
+
     function pushScriptAction(action) {
       scriptUndoStack.push(action);
       scriptRedoStack = [];
-      renderScriptToolbar();
+      updateUndoRedoButtonsUI();
     }
 
     function handleScriptBlockClick(e, itemId) {
@@ -3589,33 +3620,61 @@ let scriptFontSize = 16;
       });
     }
 
+    let lastPenTimestamp = 0;
+
     function bindCanvasDrawingEvents(canvas, itemId) {
       if (canvas.dataset.bound === '1') return;
       canvas.dataset.bound = '1';
 
       let activePointerId = null;
+      let activePointerType = null;
       let currentStroke = null;
       let cachedRect = null;
 
+      const blockTouchIfDrawing = (te) => {
+        if (['PEN', 'HIGHLIGHT', 'ERASER'].includes(scriptToolState.mode)) {
+          if (te.cancelable) te.preventDefault();
+          te.stopPropagation();
+        }
+      };
+
+      canvas.addEventListener('touchstart', blockTouchIfDrawing, { passive: false });
+      canvas.addEventListener('touchmove', blockTouchIfDrawing, { passive: false });
+      canvas.addEventListener('touchend', blockTouchIfDrawing, { passive: false });
+
       const getPosFromRect = (clientX, clientY, r) => {
+        const rx = Math.max(0, Math.min(1, (clientX - r.left) / (r.width || 1)));
+        const ry = Math.max(0, Math.min(1, (clientY - r.top) / (r.height || 1)));
         return {
-          x: Math.max(0, Math.min(1, (clientX - r.left) / (r.width || 1))),
-          y: Math.max(0, Math.min(1, (clientY - r.top) / (r.height || 1)))
+          x: Math.round(rx * 10000) / 10000,
+          y: Math.round(ry * 10000) / 10000
         };
       };
 
       canvas.addEventListener('pointerdown', (e) => {
         if (!['PEN', 'HIGHLIGHT', 'ERASER'].includes(scriptToolState.mode)) return;
-        if (activePointerId !== null) return;
 
-        e.preventDefault();
+        if (e.pointerType === 'pen') {
+          lastPenTimestamp = Date.now();
+        } else if (e.pointerType === 'touch' && (Date.now() - lastPenTimestamp < 800)) {
+          return;
+        }
+
+        if (activePointerId !== null && activePointerId !== e.pointerId) {
+          if (e.pointerType === 'pen' && activePointerType !== 'pen') {
+            activePointerId = null;
+            currentStroke = null;
+          } else {
+            return;
+          }
+        }
+
+        if (e.cancelable) e.preventDefault();
         e.stopPropagation();
 
         activePointerId = e.pointerId;
+        activePointerType = e.pointerType;
         cachedRect = canvas.getBoundingClientRect();
-        try {
-          canvas.setPointerCapture(activePointerId);
-        } catch (err) {}
 
         const project = getCurrentProject();
         const item = project.items.find(i => i.id === itemId);
@@ -3648,31 +3707,32 @@ let scriptFontSize = 16;
 
       canvas.addEventListener('pointermove', (e) => {
         if (e.pointerId !== activePointerId || !currentStroke) return;
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
         e.stopPropagation();
 
+        if (e.pointerType === 'pen') lastPenTimestamp = Date.now();
+
         const r = cachedRect || canvas.getBoundingClientRect();
-        const events = (typeof e.getCoalescedEvents === 'function') ? e.getCoalescedEvents() : [e];
         const ctx = canvas.getContext('2d');
 
         if (currentStroke.mode === 'HIGHLIGHT') {
-          events.forEach(ev => {
-            const pt = getPosFromRect(ev.clientX, ev.clientY, r);
-            const prev = currentStroke.points[currentStroke.points.length - 1];
-            if (!prev || Math.hypot(pt.x - prev.x, pt.y - prev.y) > 0.0015) {
-              currentStroke.points.push(pt);
-            }
-          });
-          const project = getCurrentProject();
-          const item = project.items.find(i => i.id === itemId);
-          if (item) redrawCanvasStrokes(canvas, item.strokes);
+          const pt = getPosFromRect(e.clientX, e.clientY, r);
+          const prev = currentStroke.points[currentStroke.points.length - 1];
+          if (!prev || Math.hypot(pt.x - prev.x, pt.y - prev.y) > 0.002) {
+            currentStroke.points.push(pt);
+            const project = getCurrentProject();
+            const item = project.items.find(i => i.id === itemId);
+            if (item) redrawCanvasStrokes(canvas, item.strokes);
+          }
           return;
         }
 
+        const events = (typeof e.getCoalescedEvents === 'function') ? e.getCoalescedEvents() : [e];
         ctx.save();
         applyStrokeStyleToContext(ctx, currentStroke);
         ctx.beginPath();
 
+        let hasSegment = false;
         events.forEach(ev => {
           const prev = currentStroke.points[currentStroke.points.length - 1];
           const pt = getPosFromRect(ev.clientX, ev.clientY, r);
@@ -3680,30 +3740,30 @@ let scriptFontSize = 16;
             currentStroke.points.push(pt);
             ctx.moveTo(prev.x * canvas.width, prev.y * canvas.height);
             ctx.lineTo(pt.x * canvas.width, pt.y * canvas.height);
+            hasSegment = true;
           }
         });
 
-        ctx.stroke();
+        if (hasSegment) ctx.stroke();
         ctx.restore();
       }, { passive: false });
 
       const finishStroke = (e) => {
         if (e.pointerId !== activePointerId) return;
-        try {
-          canvas.releasePointerCapture(activePointerId);
-        } catch (err) {}
         activePointerId = null;
+        activePointerType = null;
         cachedRect = null;
 
         if (currentStroke) {
           pushScriptAction({ type: 'STROKE', itemId, stroke: currentStroke });
         }
         currentStroke = null;
-        saveState();
+        scheduleDrawingSaveState();
       };
 
       canvas.addEventListener('pointerup', finishStroke);
       canvas.addEventListener('pointercancel', finishStroke);
+      canvas.addEventListener('lostpointercapture', finishStroke);
     }
 
     function undoScriptStroke() {
