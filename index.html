@@ -2762,6 +2762,7 @@
       if (item) {
         item.checked = !item.checked;
         saveState();
+        syncDataToGoogleDrive(true);
         renderApp();
       }
     }
@@ -2783,6 +2784,7 @@
       if (!project.sceneDone) project.sceneDone = {};
       project.sceneDone[sceneCode] = !project.sceneDone[sceneCode];
       saveState();
+      syncDataToGoogleDrive(true);
       renderApp();
     }
 
@@ -2791,6 +2793,7 @@
       if (!project.sceneDone) project.sceneDone = {};
       project.sceneDone[sceneCode] = !project.sceneDone[sceneCode];
       saveState();
+      syncDataToGoogleDrive(true);
       renderApp();
       openSceneModal(sceneCode, false);
     }
@@ -4148,6 +4151,7 @@ let scriptFontSize = 16;
       if (!project.sceneDone) project.sceneDone = {};
       project.sceneDone[sceneCode] = !project.sceneDone[sceneCode];
       saveState();
+      syncDataToGoogleDrive(true);
       renderApp();
       renderScriptPaperBlocks();
       setTimeout(() => {
@@ -4280,8 +4284,18 @@ let scriptFontSize = 16;
         const parsed = JSON.parse(text);
         if (parsed && parsed.projects && Object.keys(parsed.projects).length > 0) {
           appState.projects = parsed.projects;
-          appState.activeProject = parsed.activeProject || Object.keys(parsed.projects)[0];
-          saveState();
+          if (parsed.activeProject && parsed.projects[parsed.activeProject]) {
+            appState.activeProject = parsed.activeProject;
+          }
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+              activeProject: appState.activeProject,
+              activeTab: appState.activeTab,
+              locationsSubView: appState.locationsSubView,
+              lastBackupTime: appState.lastBackupTime,
+              projects: appState.projects
+            }));
+          } catch (e) {}
           renderApp();
           if (statusEl) {
             statusEl.textContent = 'Dáta úspešne stiahnuté z Google Drivu!';
