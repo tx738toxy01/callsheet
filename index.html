@@ -25,8 +25,14 @@
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     html, body {
       background-color: #09090b;
-      overscroll-behavior: none;
+      overscroll-behavior-y: auto;
       overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    header.sticky {
+      position: sticky;
+      top: 0;
+      padding-top: env(safe-area-inset-top, 0px);
     }
     body.script-reader-locked {
       position: fixed !important;
