@@ -2,11 +2,11 @@
 <html lang="sk" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#18181b" />
+  <meta name="theme-color" content="#09090b" />
   <title>Produkčný Call Sheet</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -23,9 +23,30 @@
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    html, body {
+      background-color: #09090b;
+      overscroll-behavior: none;
+    }
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       -webkit-tap-highlight-color: transparent;
+    }
+    :fullscreen, :-webkit-full-screen {
+      background-color: #09090b !important;
+    }
+    #scriptReaderOverlay {
+      background-color: #09090b !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100vw !important;
+      height: 100dvh !important;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      overscroll-behavior: none;
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -3116,13 +3137,104 @@ let scriptFontSize = 16;
       }).join('');
     }
 
-    function openScriptReader(targetSceneCode = '') {
+    let lastDrawingActivityTime = 0;
+
+    function ensureScriptFullscreen() {
+      const ov = document.getElementById('scriptReaderOverlay');
+      if (!ov || ov.classList.contains('hidden')) return;
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen().catch(() => {});
+        } else if (docEl.webkitRequestFullscreen) {
+          try { docEl.webkitRequestFullscreen(); } catch (e) {}
+        }
+      }
+    }
+
+    function saveScriptReaderLockState(isOpen, sceneCode = '') {
+      try {
+        const scrollEl = document.getElementById('scriptReaderScroll');
+        localStorage.setItem('script_reader_lock_v1', JSON.stringify({
+          open: !!isOpen,
+          project: appState.activeProject,
+          scene: sceneCode,
+          scrollTop: scrollEl ? scrollEl.scrollTop : 0
+        }));
+      } catch (e) {}
+    }
+
+    function initScriptReaderLockGuards() {
+      const ov = document.getElementById('scriptReaderOverlay');
+      const scrollEl = document.getElementById('scriptReaderScroll');
+      if (!ov || ov.dataset.lockGuardBound === '1') return;
+      ov.dataset.lockGuardBound = '1';
+
+      const preventSystemGesture = (e) => {
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
+      };
+
+      ov.addEventListener('gesturestart', preventSystemGesture, { passive: false });
+      ov.addEventListener('gesturechange', preventSystemGesture, { passive: false });
+      ov.addEventListener('gestureend', preventSystemGesture, { passive: false });
+
+      ov.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length > 1) {
+          if (e.cancelable) e.preventDefault();
+        }
+      }, { passive: false });
+
+      ov.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'pen') {
+          lastDrawingActivityTime = Date.now();
+        }
+        if (!e.target.closest('button[onclick*="closeScriptReader"]')) {
+          ensureScriptFullscreen();
+        }
+      }, { capture: true });
+
+      if (scrollEl) {
+        scrollEl.addEventListener('scroll', () => {
+          if (!ov.classList.contains('hidden')) {
+            saveScriptReaderLockState(true, document.getElementById('scriptJumpSelect')?.value || '');
+          }
+        }, { passive: true });
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          restoreScriptReaderIfLocked();
+        }
+      });
+
+      window.addEventListener('pageshow', () => {
+        restoreScriptReaderIfLocked();
+      });
+    }
+
+    function restoreScriptReaderIfLocked() {
+      try {
+        const raw = localStorage.getItem('script_reader_lock_v1');
+        if (!raw) return;
+        const lock = JSON.parse(raw);
+        if (!lock || !lock.open) return;
+        const ov = document.getElementById('scriptReaderOverlay');
+        if (ov && ov.classList.contains('hidden')) {
+          openScriptReader(lock.scene || '', lock.scrollTop || 0);
+        }
+      } catch (e) {}
+    }
+
+    function openScriptReader(targetSceneCode = '', restoreScrollTop = null) {
       const project = getCurrentProject();
       const scriptItems = project.items.filter(i => i.group === 'SCRIPT');
       if (scriptItems.length === 0) {
         alert('V tomto výrobnom liste zatiaľ nie sú nahraté riadky scenára.');
         return;
       }
+
+      initScriptReaderLockGuards();
 
       const jumpSelect = document.getElementById('scriptJumpSelect');
       jumpSelect.innerHTML = scriptItems.map((it, idx) => {
@@ -3138,22 +3250,22 @@ let scriptFontSize = 16;
       ov.classList.add('flex');
       document.body.style.overflow = 'hidden';
 
+      saveScriptReaderLockState(true, targetSceneCode);
+
       setTimeout(() => {
         initAllScriptCanvases();
+        fitAllStickyTextareas();
         applyScriptToolModeToDOM();
-        if (targetSceneCode) {
+        if (typeof restoreScrollTop === 'number' && restoreScrollTop > 0) {
+          document.getElementById('scriptReaderScroll').scrollTop = restoreScrollTop;
+        } else if (targetSceneCode) {
           scrollToScriptScene(targetSceneCode);
         } else {
           document.getElementById('scriptReaderScroll').scrollTop = 0;
         }
       }, 50);
 
-      const docEl = document.documentElement;
-      if (docEl.requestFullscreen) {
-        docEl.requestFullscreen().catch(() => {});
-      } else if (docEl.webkitRequestFullscreen) {
-        docEl.webkitRequestFullscreen();
-      }
+      ensureScriptFullscreen();
     }
 
     function renderScriptPaperBlocks() {
@@ -3602,9 +3714,10 @@ let scriptFontSize = 16;
     }
 
     function getPenPressureWidth(baseSize, pressure) {
-      const p = (typeof pressure === 'number' && pressure > 0) ? pressure : 0.5;
-      const factor = 0.4 + Math.pow(Math.max(0.05, Math.min(1, p)), 1.1) * 1.9;
-      return Math.max(1, Math.round(baseSize * factor * 10) / 10);
+      const p = (typeof pressure === 'number' && pressure > 0) ? pressure : 0.3;
+      const clamped = Math.max(0.02, Math.min(1, p));
+      const factor = 0.2 + Math.pow(clamped, 1.75) * 6.4;
+      return Math.max(0.5, Math.round(baseSize * factor * 10) / 10);
     }
 
     function applyStrokeStyleToContext(ctx, stroke) {
@@ -3798,8 +3911,8 @@ let scriptFontSize = 16;
 
         events.forEach(ev => {
           const prev = currentStroke.points[currentStroke.points.length - 1];
-          const rawP = (e.pointerType === 'pen' && ev.pressure > 0) ? ev.pressure : 0.5;
-          lastSmoothedPressure = lastSmoothedPressure * 0.55 + rawP * 0.45;
+          const rawP = (e.pointerType === 'pen' && ev.pressure > 0) ? ev.pressure : 0.3;
+          lastSmoothedPressure = lastSmoothedPressure * 0.22 + rawP * 0.78;
           const pt = getPosFromRect(ev.clientX, ev.clientY, r, lastSmoothedPressure);
 
           if (!prev || Math.hypot(pt.x - prev.x, pt.y - prev.y) > 0.0007) {
@@ -4023,6 +4136,10 @@ let scriptFontSize = 16;
     }
 
     function closeScriptReader() {
+      if (Date.now() - lastDrawingActivityTime < 350) return;
+
+      saveScriptReaderLockState(false, '');
+
       const ov = document.getElementById('scriptReaderOverlay');
       ov.classList.add('hidden');
       ov.classList.remove('flex');
@@ -4036,22 +4153,19 @@ let scriptFontSize = 16;
         if (document.exitFullscreen) {
           document.exitFullscreen().catch(() => {});
         } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
+          try { document.webkitExitFullscreen(); } catch (e) {}
         }
       }
     }
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        if (!document.getElementById('scriptReaderOverlay').classList.contains('hidden')) {
-          closeScriptReader();
-        } else {
+        if (document.getElementById('scriptReaderOverlay').classList.contains('hidden')) {
           closeModal();
         }
       }
     });
 
-    // Boot
     loadState();
     if (!localStorage.getItem('theme_manually_toggled')) {
       if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -4069,6 +4183,7 @@ let scriptFontSize = 16;
       }, '');
     } catch (e) {}
     renderApp();
+    restoreScriptReaderIfLocked();
   </script>
 </body>
 </html>
