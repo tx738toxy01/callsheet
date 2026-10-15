@@ -38,14 +38,10 @@
       background-color: #09090b !important;
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      width: 100vw !important;
-      height: 100dvh !important;
-      padding-top: env(safe-area-inset-top, 0px);
-      padding-bottom: env(safe-area-inset-bottom, 0px);
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
       overscroll-behavior: none;
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -3139,19 +3135,6 @@ let scriptFontSize = 16;
 
     let lastDrawingActivityTime = 0;
 
-    function ensureScriptFullscreen() {
-      const ov = document.getElementById('scriptReaderOverlay');
-      if (!ov || ov.classList.contains('hidden')) return;
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        const docEl = document.documentElement;
-        if (docEl.requestFullscreen) {
-          docEl.requestFullscreen().catch(() => {});
-        } else if (docEl.webkitRequestFullscreen) {
-          try { docEl.webkitRequestFullscreen(); } catch (e) {}
-        }
-      }
-    }
-
     function saveScriptReaderLockState(isOpen, sceneCode = '') {
       try {
         const scrollEl = document.getElementById('scriptReaderScroll');
@@ -3188,9 +3171,6 @@ let scriptFontSize = 16;
       ov.addEventListener('pointerdown', (e) => {
         if (e.pointerType === 'pen') {
           lastDrawingActivityTime = Date.now();
-        }
-        if (!e.target.closest('button[onclick*="closeScriptReader"]')) {
-          ensureScriptFullscreen();
         }
       }, { capture: true });
 
@@ -3264,8 +3244,6 @@ let scriptFontSize = 16;
           document.getElementById('scriptReaderScroll').scrollTop = 0;
         }
       }, 50);
-
-      ensureScriptFullscreen();
     }
 
     function renderScriptPaperBlocks() {
@@ -4147,14 +4125,6 @@ let scriptFontSize = 16;
         document.body.style.overflow = '';
       } else if (modalStack.length > 0 && modalStack[modalStack.length - 1].type === 'SCENE') {
         openSceneModal(modalStack[modalStack.length - 1].id, false);
-      }
-
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
-        if (document.exitFullscreen) {
-          document.exitFullscreen().catch(() => {});
-        } else if (document.webkitExitFullscreen) {
-          try { document.webkitExitFullscreen(); } catch (e) {}
-        }
       }
     }
 
