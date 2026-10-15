@@ -2928,12 +2928,36 @@ let scriptFontSize = 16;
       if (!wrap) return;
 
       const tools = [
-        { id: 'READ', label: 'Posun', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/></svg>` },
-        { id: 'PEN', label: 'Pero', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>` },
-        { id: 'HIGHLIGHT', label: 'Fixka', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>` },
-        { id: 'ERASER', label: 'Guma', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>` },
-        { id: 'TEXT', label: 'Písať text', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7"/></svg>` },
-        { id: 'STICKY', label: '+ Štítok', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>` }
+        {
+          id: 'READ',
+          label: 'Posun',
+          icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/></svg>`
+        },
+        {
+          id: 'PEN',
+          label: 'Pero',
+          icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`
+        },
+        {
+          id: 'HIGHLIGHT',
+          label: 'Fixka',
+          icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.5 3.5l6 6-9 9H5.5v-6l9-9zM3 21h8"/></svg>`
+        },
+        {
+          id: 'ERASER',
+          label: 'Guma',
+          icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 8.636l-8.486 8.486a2 2 0 01-2.828 0L3.515 13.586a2 2 0 010-2.828l8.486-8.486a2 2 0 012.828 0l3.535 3.536a2 2 0 010 2.828zM6.343 16.414l5.657-5.657M3 21h18"/></svg>`
+        },
+        {
+          id: 'TEXT',
+          label: 'Písať text',
+          icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 6h14M12 6v13m-2.5 0h5"/></svg>`
+        },
+        {
+          id: 'STICKY',
+          label: 'Štítok',
+          icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h9l6-6V5a2 2 0 00-2-2zM14 15v6l6-6h-6z"/></svg>`
+        }
       ];
 
       const colors = [
@@ -2945,38 +2969,38 @@ let scriptFontSize = 16;
       ];
 
       const sizes = [
-        { val: 2, label: 'Tenké', dot: 'w-1.5 h-1.5' },
-        { val: 4, label: 'Stredné', dot: 'w-2.5 h-2.5' },
-        { val: 7, label: 'Hrubé', dot: 'w-3.5 h-3.5' }
+        { val: 2, label: 'Tenké / Malá guma', dot: 'w-1.5 h-1.5' },
+        { val: 4, label: 'Stredné / 3 cm guma', dot: 'w-2.5 h-2.5' },
+        { val: 7, label: 'Hrubé / 6 cm guma', dot: 'w-3.5 h-3.5' }
       ];
 
       const canUndo = scriptUndoStack.length > 0;
       const canRedo = scriptRedoStack.length > 0;
 
       wrap.innerHTML = `
-        <div class="flex items-center gap-1 shrink-0">
+        <div class="flex items-center gap-1.5 shrink-0">
           ${tools.map(t => {
             const active = scriptToolState.mode === t.id;
             return `
               <button
                 onclick="setScriptToolMode('${t.id}')"
-                class="px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 ${
+                title="${t.label}"
+                class="w-9 h-9 rounded-xl flex items-center justify-center transition shrink-0 ${
                   active ? 'bg-amber-500 text-zinc-950 shadow-xs' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                 }"
               >
                 ${t.icon}
-                <span>${t.label}</span>
               </button>
             `;
           }).join('')}
 
-          <div class="flex items-center gap-1 pl-1.5 ml-1 border-l border-zinc-800">
+          <div class="flex items-center gap-1 pl-1.5 ml-0.5 border-l border-zinc-800">
             <button
               id="scriptUndoBtn"
               onclick="undoScriptStroke()"
               ${!canUndo ? 'disabled' : ''}
               title="Späť (Undo)"
-              class="w-8 h-8 rounded-xl flex items-center justify-center transition ${
+              class="w-9 h-9 rounded-xl flex items-center justify-center transition shrink-0 ${
                 canUndo ? 'bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950' : 'bg-zinc-800/40 text-zinc-600 cursor-not-allowed'
               }"
             >
@@ -2987,7 +3011,7 @@ let scriptFontSize = 16;
               onclick="redoScriptStroke()"
               ${!canRedo ? 'disabled' : ''}
               title="Dopredu (Redo)"
-              class="w-8 h-8 rounded-xl flex items-center justify-center transition ${
+              class="w-9 h-9 rounded-xl flex items-center justify-center transition shrink-0 ${
                 canRedo ? 'bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950' : 'bg-zinc-800/40 text-zinc-600 cursor-not-allowed'
               }"
             >
@@ -2997,7 +3021,6 @@ let scriptFontSize = 16;
         </div>
 
         <div class="flex items-center gap-3 shrink-0 pl-2 border-l border-zinc-800">
-          <!-- Farby -->
           <div class="flex items-center gap-1.5">
             ${colors.map(c => {
               const active = scriptToolState.color === c.hex;
@@ -3012,7 +3035,6 @@ let scriptFontSize = 16;
             }).join('')}
           </div>
 
-          <!-- Hrúbky pera -->
           <div class="flex items-center gap-1 bg-zinc-800 p-1 rounded-xl">
             ${sizes.map(s => {
               const active = scriptToolState.size === s.val;
