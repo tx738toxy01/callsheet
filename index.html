@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#18181b" />
   <title>Produkčný Call Sheet</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -85,12 +89,12 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(to bottom right, transparent 49.5%, rgba(24, 24, 27, 0.4) 49.5%, rgba(24, 24, 27, 0.4) 50.5%, transparent 50.5%);
+      background: linear-gradient(to bottom right, transparent calc(50% - 0.75px), rgba(24, 24, 27, 0.3) calc(50% - 0.75px), rgba(24, 24, 27, 0.3) calc(50% + 0.75px), transparent calc(50% + 0.75px));
       pointer-events: none;
-      z-index: 20;
+      z-index: 10;
     }
     .dark .script-done-cross::after {
-      background: linear-gradient(to bottom right, transparent 49.5%, rgba(255, 255, 255, 0.2) 49.5%, rgba(255, 255, 255, 0.2) 50.5%, transparent 50.5%);
+      background: linear-gradient(to bottom right, transparent calc(50% - 0.75px), rgba(244, 244, 245, 0.22) calc(50% - 0.75px), rgba(244, 244, 245, 0.22) calc(50% + 0.75px), transparent calc(50% + 0.75px));
     }
   </style>
 </head>
@@ -306,24 +310,33 @@
   </main>
 
   <div id="scriptReaderOverlay" class="fixed inset-0 z-[60] bg-zinc-900/95 backdrop-blur-md hidden flex-col">
-    <div class="bg-zinc-900 border-b border-zinc-800 px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3 text-zinc-100 shrink-0">
-      <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-        <button onclick="closeScriptReader()" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center transition shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <select id="scriptJumpSelect" onchange="scrollToScriptScene(this.value)" class="bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs sm:text-sm font-bold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-amber-500 w-full max-w-[200px] sm:max-w-xs truncate">
-        </select>
+    <div class="bg-zinc-900 border-b border-zinc-800 px-3 sm:px-6 py-2 flex flex-col gap-2 text-zinc-100 shrink-0">
+      <!-- Top Row: Navigation & Font Size -->
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+          <button onclick="closeScriptReader()" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center transition shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <select id="scriptJumpSelect" onchange="scrollToScriptScene(this.value)" class="bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs sm:text-sm font-bold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-amber-500 w-full max-w-[180px] sm:max-w-xs truncate">
+          </select>
+        </div>
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button onclick="adjustScriptFontSize(-1)" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs sm:text-sm font-extrabold flex items-center justify-center transition" title="Zmenšiť písmo">A-</button>
+          <button id="scriptFontResetBtn" onclick="resetScriptFontSize()" class="px-2.5 h-9 rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-[11px] font-extrabold flex items-center justify-center transition text-zinc-400" title="Vrátiť pôvodnú veľkosť písma (16px)">16px</button>
+          <button onclick="adjustScriptFontSize(1)" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs sm:text-sm font-extrabold flex items-center justify-center transition" title="Zväčšiť písmo">A+</button>
+          <button onclick="closeScriptReader()" class="flex w-9 h-9 rounded-full bg-zinc-800 hover:bg-rose-500 hover:text-white items-center justify-center text-zinc-400 transition ml-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="flex items-center gap-1.5 shrink-0">
-        <button onclick="adjustScriptFontSize(-1)" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm font-extrabold flex items-center justify-center transition" title="Zmenšiť písmo">A-</button>
-        <button onclick="adjustScriptFontSize(1)" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm font-extrabold flex items-center justify-center transition" title="Zväčšiť písmo">A+</button>
-        <button onclick="closeScriptReader()" class="flex w-9 h-9 rounded-full bg-zinc-800 hover:bg-rose-500 hover:text-white items-center justify-center text-zinc-400 transition ml-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
+
+      <!-- Second Row: Interactive Script Annotation Toolbar -->
+      <div id="scriptToolbarWrap" class="flex items-center justify-between gap-2 pt-1.5 border-t border-zinc-800/80 overflow-x-auto no-scrollbar">
       </div>
     </div>
     <div id="scriptReaderScroll" class="flex-1 overflow-y-auto p-2 sm:p-6 md:p-10 scroll-smooth">
-      <div id="scriptPaperContainer" class="max-w-3xl mx-auto bg-[#fdfbf7] text-zinc-950 shadow-2xl rounded-xs sm:rounded-md px-5 sm:px-14 py-8 sm:py-14 border border-zinc-300 transition-colors duration-200" style="font-family: 'Courier New', Courier, monospace; font-size: 16px; line-height: 1.55;">
+      <div id="scriptPaperContainer" class="max-w-3xl mx-auto bg-[#fdfbf7] text-zinc-950 shadow-2xl rounded-xs sm:rounded-md border border-zinc-300 transition-colors duration-200" style="font-family: 'Courier New', Courier, monospace; font-size: 16px; line-height: 1.55;">
       </div>
     </div>
   </div>
@@ -340,9 +353,12 @@
           </button>
           <div id="modalTitleWrap" class="min-w-0"></div>
         </div>
-        <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center text-zinc-500 dark:text-zinc-400 transition shrink-0">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
+        <div class="flex items-center gap-2 shrink-0">
+          <div id="modalHeaderAction"></div>
+          <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center text-zinc-500 dark:text-zinc-400 transition shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
       </div>
 
       <!-- Modal Body -->
@@ -778,6 +794,23 @@
       });
 
       return { sortedScenes, sceneMap, itemScenesMap };
+    }
+
+    function renderSceneButton(sc, extraClass = '') {
+      const project = getCurrentProject();
+      const isDone = !!project.sceneDone?.[sc];
+      return `
+        <button
+          onclick="event.stopPropagation(); openSceneModal('${escapeHtml(sc)}')"
+          class="relative overflow-hidden font-bold border transition shadow-2xs ${extraClass} ${
+            isDone
+              ? 'opacity-50 grayscale script-done-cross bg-zinc-100 dark:bg-zinc-800/60 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300'
+              : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 text-zinc-800 dark:text-zinc-200'
+          }"
+        >
+          <span>${escapeHtml(sc)}</span>
+        </button>
+      `;
     }
 
     function buildMainLocationsCatalog(project, locationItems, itemScenesMap) {
@@ -1324,7 +1357,7 @@
         { id: 'HOME', label: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`, count: null },
         { id: 'SCENES', label: 'Obrazy', count: `${doneScenes}/${counts.SCENES}` },
         { id: 'CAST', label: 'Účinkujúci', count: counts.CAST },
-        { id: 'LOCATIONS', label: 'Lokácie', count: `${counts.MAIN_LOCS} (${counts.LOCATIONS})` },
+        { id: 'LOCATIONS', label: 'Lokácie', count: counts.LOCATIONS },
         { id: 'GASTRO', label: 'Gastro', count: counts.GASTRO },
         { id: 'COSTUMES', label: 'Kostýmy', count: `${peopleWithCostumes.length} (${counts.COSTUMES})` },
         { id: 'PROPS', label: 'Rekvizity', count: counts.PROPS },
@@ -1354,8 +1387,6 @@
         mainEl.innerHTML = renderHomeBento(project, counts, doneScenes, totalScenes, doneItems, totalItems, peopleWithCostumes.length);
       } else if (effectiveTab === 'SCENES') {
         mainEl.innerHTML = renderCompactScenes(project, sortedScenes, sceneMap);
-      } else if (effectiveTab === 'LOCATIONS') {
-        mainEl.innerHTML = renderLocationsView(project, locItems, mainLocGroups, itemScenesMap);
       } else if (effectiveTab === 'COSTUMES') {
         mainEl.innerHTML = renderUnifiedCostumesView(project, peopleWithCostumes, customCostumeItems, totalCostumeCount, itemScenesMap);
       } else {
@@ -1364,7 +1395,12 @@
         let sectionSubtitle = `Nájdených ${list.length} položiek`;
         let defaultCatForAdd = 'ÚČINKUJÚCI';
 
-        if (effectiveTab === 'CAST') {
+        if (effectiveTab === 'LOCATIONS') {
+          list = filteredItems.filter(i => i.group === 'LOCATIONS');
+          sectionTitle = 'Lokácie a priestory';
+          sectionSubtitle = 'Zoznam všetkých lokácií, interiérov a exteriérov — kliknite pre detail.';
+          defaultCatForAdd = 'LOKÁCIA (INT.)';
+        } else if (effectiveTab === 'CAST') {
           list = filteredItems.filter(i => i.group === 'CAST');
           sectionTitle = 'Účinkujúci';
           sectionSubtitle = 'Moderátori, historici, kuchári, kostýmová výtvarníčka a komparz — kliknite pre detail.';
@@ -1601,21 +1637,7 @@
                           ${c.discrete.length > 0 ? `
                             <div class="pt-1 flex flex-wrap items-center gap-1.5">
                               <span class="text-[10px] font-bold uppercase text-zinc-400 mr-0.5">Obrazy:</span>
-                              ${c.discrete.map(sc => {
-                                const scDone = project.sceneDone?.[sc];
-                                return `
-                                  <button
-                                    onclick="openSceneModal('${escapeHtml(sc)}')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-extrabold border transition flex items-center gap-1 ${
-                                      scDone
-                                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
-                                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 text-zinc-800 dark:text-zinc-200'
-                                    }"
-                                  >
-                                    <span>${escapeHtml(sc)}</span>${scDone ? ICONS.check : ''}
-                                  </button>
-                                `;
-                              }).join('')}
+                              ${c.discrete.map(sc => renderSceneButton(sc, 'px-2 py-0.5 rounded-md text-[11px]')).join('')}
                             </div>
                           ` : ''}
                         </div>
@@ -1820,21 +1842,7 @@
 
                   ${subScenes.length > 0 ? `
                     <div class="pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60 flex flex-wrap items-center gap-1.5">
-                      ${subScenes.map(sc => {
-                        const isDone = sceneMap[sc]?.done;
-                        return `
-                          <button
-                            onclick="openSceneModal('${escapeHtml(sc)}')"
-                            class="px-2.5 py-1 rounded-lg text-xs font-extrabold border transition flex items-center gap-1 ${
-                              isDone
-                                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
-                                : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 text-zinc-800 dark:text-zinc-200'
-                            }"
-                          >
-                            <span>${escapeHtml(sc)}</span>${isDone ? ICONS.check : ''}
-                          </button>
-                        `;
-                      }).join('')}
+                      ${subScenes.map(sc => renderSceneButton(sc, 'px-2.5 py-1 rounded-lg text-xs')).join('')}
                     </div>
                   ` : ''}
                 </div>
@@ -1894,38 +1902,38 @@
       const parenMatch = subCategory.match(/\(([^)]+)\)/);
       if (parenMatch) subCategory = parenMatch[1];
 
-      const sceneCountLabel = /všetky\s+okrem/i.test(item.scenesRaw)
-        ? `${scenesList.length} obrazov`
-        : (item.scenesRaw || 'Bez obrazu');
-
       return `
         <div
           onclick="openItemModal('${item.id}')"
-          class="group cursor-pointer px-4 sm:px-5 py-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition flex items-center justify-between gap-3 ${
+          class="group cursor-pointer px-4 sm:px-5 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition flex items-start justify-between gap-3 ${
             isChecked ? 'opacity-55' : ''
           }"
         >
-          <div class="flex items-center gap-3.5 min-w-0 flex-1">
+          <div class="flex items-start gap-3.5 min-w-0 flex-1">
             <button
               onclick="toggleItemCheck(event, '${item.id}')"
               title="Označiť ako vybavené"
-              class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition ${
+              class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition mt-0.5 ${
                 isChecked
                   ? 'bg-emerald-500 border-emerald-500 text-zinc-950'
                   : 'border-zinc-300 dark:border-zinc-700 hover:border-emerald-500 text-transparent'
               }"
             >${ICONS.check}</button>
 
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 group-hover:text-amber-500 transition truncate ${isChecked ? 'line-through' : ''}">
+            <div class="min-w-0 flex-1 space-y-1">
+              <!-- Názov + Tlačidlá obrazov začínajú hneď vedľa a zalamujú sa pod -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <h3 class="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 group-hover:text-amber-500 transition mr-1 ${isChecked ? 'line-through' : ''}">
                   ${escapeHtml(item.title)}
                 </h3>
                 ${hasAlert ? `<span class="w-2 h-2 rounded-full bg-rose-500 shrink-0" title="Obsahuje upozornenie POZOR"></span>` : ''}
                 ${item.userNotes ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">Poznámka</span>` : ''}
+                
+                ${scenesList.length > 0 ? scenesList.map(sc => renderSceneButton(sc, 'px-2 py-0.5 rounded-md text-[11px]')).join('') : ''}
               </div>
 
-              <div class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+              <!-- Podkategória a Lokácia -->
+              <div class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 truncate">
                 <span class="font-medium text-zinc-600 dark:text-zinc-300">${escapeHtml(subCategory)}</span>
                 <span>•</span>
                 <span class="truncate">${escapeHtml(item.mainLocation || item.locationOrEp || project.name)}</span>
@@ -1933,11 +1941,8 @@
             </div>
           </div>
 
-          <div class="flex items-center gap-2.5 shrink-0">
-            <span class="text-xs font-bold px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 max-w-[130px] sm:max-w-[180px] truncate">
-              ${escapeHtml(sceneCountLabel)}
-            </span>
-            <span class="text-zinc-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition">${ICONS.chevronRight}</span>
+          <div class="flex items-center shrink-0 pt-1 text-zinc-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition">
+            ${ICONS.chevronRight}
           </div>
         </div>
       `;
@@ -2107,18 +2112,7 @@
                     <div class="font-bold text-sm text-zinc-900 dark:text-white">${escapeHtml(c.name)}</div>${cScenes.length > 0 ? `
                       <div class="pt-1 flex flex-wrap items-center gap-1.5">
                         <span class="text-[10px] font-bold uppercase text-zinc-400 mr-0.5">Obrazy:</span>
-                        ${cScenes.map(sc => {
-                          const scDone = sceneMap[sc]?.done;
-                          return `
-                            <button onclick="openSceneModal('${escapeHtml(sc)}')" class="px-2.5 py-1 rounded-lg text-xs font-extrabold border transition flex items-center gap-1 ${
-                              scDone
-                                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
-                                : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 text-zinc-900 dark:text-zinc-100'
-                            }">
-                              <span>${escapeHtml(sc)}</span>${scDone ? ICONS.check : ''}
-                            </button>
-                          `;
-                        }).join('')}
+                        ${cScenes.map(sc => renderSceneButton(sc, 'px-2.5 py-1 rounded-lg text-xs')).join('')}
                       </div>
                     ` : ''}
                   </div>
@@ -2142,18 +2136,7 @@
               <div class="space-y-2">
                 <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">Obrazy</span>
                 <div class="flex flex-wrap gap-1.5">
-                  ${scenes.length > 0 ? scenes.map(sc => {
-                    const scDone = sceneMap[sc]?.done;
-                    return `
-                      <button onclick="openSceneModal('${escapeHtml(sc)}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold border transition flex items-center gap-1.5 ${
-                        scDone
-                          ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 text-zinc-900 dark:text-zinc-100'
-                      }">
-                        <span>${escapeHtml(sc)}</span>${scDone ? ICONS.check : ''}
-                      </button>
-                    `;
-                  }).join('') : `<span class="text-xs text-zinc-400">Zatiaľ bez priradeného obrazu</span>`}
+                  ${scenes.length > 0 ? scenes.map(sc => renderSceneButton(sc, 'px-3 py-1.5 rounded-xl text-xs')).join('') : `<span class="text-xs text-zinc-400">Zatiaľ bez priradeného obrazu</span>`}
                 </div>
               </div>
             `;
@@ -2175,18 +2158,7 @@
                 Ostatné obrazy (bez špecifického kostýmu)
               </span>
               <div class="flex flex-wrap gap-1.5">
-                ${uncoveredScenes.map(sc => {
-                  const scDone = sceneMap[sc]?.done;
-                  return `
-                    <button onclick="openSceneModal('${escapeHtml(sc)}')" class="px-2.5 py-1 rounded-lg text-xs font-extrabold border transition flex items-center gap-1 ${
-                      scDone
-                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
-                        : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:bg-amber-500 hover:text-zinc-950 text-zinc-900 dark:text-zinc-100'
-                    }">
-                      <span>${escapeHtml(sc)}</span>${scDone ? ICONS.check : ''}
-                    </button>
-                  `;
-                }).join('')}
+                ${uncoveredScenes.map(sc => renderSceneButton(sc, 'px-2.5 py-1 rounded-lg text-xs')).join('')}
               </div>
             </div>
           `;
@@ -2297,33 +2269,54 @@
 
       document.getElementById('modalTitleWrap').innerHTML = `
         <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">${escapeHtml(project.name)}</span>
-        <div class="flex items-center gap-2.5 flex-wrap">
-          <h2 class="font-extrabold text-lg sm:text-xl text-zinc-900 dark:text-white">Obraz ${escapeHtml(sceneCode)}</h2>
-          <button onclick="toggleSceneDoneInModal('${escapeHtml(sceneCode)}')" class="px-3 py-1.5 rounded-xl font-extrabold text-xs transition flex items-center gap-1.5 shrink-0 ${
-            scObj.done
-              ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
-              : 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
-          }">
-            ${scObj.done ? `${ICONS.check}<span>Natočené</span>` : '<span>Označiť ako natočené</span>'}
-          </button>
-        </div>
+        <h2 class="font-extrabold text-lg sm:text-xl text-zinc-900 dark:text-white">Obraz ${escapeHtml(sceneCode)}</h2>
+      `;
+
+      document.getElementById('modalHeaderAction').innerHTML = `
+        <button onclick="toggleSceneDoneInModal('${escapeHtml(sceneCode)}')" class="px-3 py-1.5 rounded-xl font-extrabold text-xs transition flex items-center gap-1.5 shrink-0 ${
+          scObj.done
+            ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
+            : 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
+        }">
+          ${scObj.done ? `${ICONS.check}<span>Natočené</span>` : '<span>Označiť ako natočené</span>'}
+        </button>
       `;
 
       const renderScriptPreview = () => {
         if (scripts.length === 0) return '';
         const scItem = scripts[0];
         const doneClasses = scObj.done ? 'relative script-done-cross opacity-50 grayscale' : '';
+        const innerHtmlContent = scItem.customHtml || formatScriptLinesHTML(scItem.details);
+        const stickyList = scItem.stickyNotes || [];
+
         return `
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Scenár obrazu ${escapeHtml(sceneCode)}</span>
               <button onclick="openScriptReader('${escapeHtml(sceneCode)}')" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-extrabold flex items-center gap-1.5 shadow-2xs transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
-                <span>Celý scenár</span>
+                <span>Celý scenár / Upraviť</span>
               </button>
             </div>
-            <div onclick="openScriptReader('${escapeHtml(sceneCode)}')" title="Kliknite pre otvorenie celého skrolovateľného scenára" class="cursor-pointer bg-[#fdfbf7] dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-xl p-4 sm:p-5 shadow-inner space-y-2.5 text-xs sm:text-sm hover:border-amber-500 transition ${doneClasses}" style="font-family: 'Courier New', Courier, monospace; line-height: 1.5;">
-              ${formatScriptLinesHTML(scItem.details)}
+            <div
+              id="modal-script-viewport-${escapeHtml(scItem.id)}"
+              onclick="openScriptReader('${escapeHtml(sceneCode)}')"
+              title="Kliknite pre otvorenie celého scenára a kreslenie"
+              class="relative overflow-hidden cursor-pointer bg-[#fdfbf7] text-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-xl shadow-inner hover:border-amber-500 transition ${doneClasses}"
+            >
+              <div
+                id="modal-script-scaler-${escapeHtml(scItem.id)}"
+                class="origin-top-left relative px-5 sm:px-14 py-6 sm:py-10"
+                style="width: 768px; font-family: 'Courier New', Courier, monospace; font-size: 16px; line-height: 1.55;"
+              >
+                <div id="modal-script-text-${escapeHtml(scItem.id)}" class="space-y-3.5 relative z-10 pointer-events-none">
+                  ${innerHtmlContent}
+                </div>
+                <canvas id="modal-script-canvas-${escapeHtml(scItem.id)}" class="absolute inset-0 z-20 pointer-events-none"></canvas>
+                <div class="absolute inset-0 z-30 pointer-events-none [&_*]:!pointer-events-none">
+                  ${stickyList.map(st => renderSingleStickyHTML(scItem.id, st)).join('')}
+                </div>
+              </div>
             </div>
           </div>
         `;
@@ -2362,6 +2355,39 @@
       `;
 
       showModalOverlay();
+
+      if (scripts.length > 0) {
+        setTimeout(() => {
+          const scItem = scripts[0];
+          const viewport = document.getElementById(`modal-script-viewport-${scItem.id}`);
+          const scaler = document.getElementById(`modal-script-scaler-${scItem.id}`);
+          const textEl = document.getElementById(`modal-script-text-${scItem.id}`);
+          const canvas = document.getElementById(`modal-script-canvas-${scItem.id}`);
+
+          if (viewport && scaler && textEl && canvas) {
+            const paperEl = document.getElementById('scriptPaperContainer');
+            const baseW = (paperEl && paperEl.offsetWidth > 200) ? paperEl.offsetWidth : 768;
+            scaler.style.width = baseW + 'px';
+            scaler.style.fontSize = scriptFontSize + 'px';
+
+            fitAllStickyTextareas();
+
+            const viewW = viewport.clientWidth || 400;
+            const scale = Math.min(1, viewW / baseW);
+
+            const contentW = baseW;
+            const contentH = scaler.offsetHeight || 200;
+            canvas.width = contentW;
+            canvas.height = contentH;
+            canvas.style.width = contentW + 'px';
+            canvas.style.height = contentH + 'px';
+            redrawCanvasStrokes(canvas, scItem.strokes || []);
+
+            scaler.style.transform = `scale(${scale})`;
+            viewport.style.height = `${contentH * scale}px`;
+          }
+        }, 30);
+      }
     }
 
     // =========================================================================
@@ -2661,6 +2687,10 @@
     // 18. UTILITY ACTIONS
     // =========================================================================
     function showModalOverlay() {
+      if (modalStack.length === 0 || modalStack[modalStack.length - 1]?.type !== 'SCENE') {
+        const headerAct = document.getElementById('modalHeaderAction');
+        if (headerAct) headerAct.innerHTML = '';
+      }
       const modalCont = document.getElementById('modalContainer');
       if (modalCont) modalCont.classList.remove('opacity-75', 'grayscale');
       const ov = document.getElementById('modalOverlay');
@@ -2674,6 +2704,8 @@
       ov.classList.add('hidden');
       ov.classList.remove('flex');
       document.body.style.overflow = '';
+      const doneBtn = document.getElementById('modalSceneDoneBtn');
+      if (doneBtn) doneBtn.remove();
     }
 
     function closeModal() {
@@ -2868,7 +2900,193 @@
         .replace(/'/g, '&#39;');
     }
 
-    let scriptFontSize = 16;
+let scriptFontSize = 16;
+    let scriptUndoStack = [];
+    let scriptRedoStack = [];
+
+    let scriptToolState = {
+      mode: 'READ', // 'READ', 'PEN', 'HIGHLIGHT', 'ERASER', 'TEXT', 'STICKY'
+      color: '#ef4444', // Red, Yellow (#facc15), Blue (#3b82f6), Green (#22c55e), Black (#18181b)
+      size: 3 // 2 (thin), 4 (medium), 7 (thick)
+    };
+
+    function renderScriptToolbar() {
+      const wrap = document.getElementById('scriptToolbarWrap');
+      if (!wrap) return;
+
+      const tools = [
+        { id: 'READ', label: 'Posun', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/></svg>` },
+        { id: 'PEN', label: 'Pero', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>` },
+        { id: 'HIGHLIGHT', label: 'Fixka', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>` },
+        { id: 'ERASER', label: 'Guma', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>` },
+        { id: 'TEXT', label: 'Písať text', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7"/></svg>` },
+        { id: 'STICKY', label: '+ Štítok', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>` }
+      ];
+
+      const colors = [
+        { hex: '#ef4444', name: 'Červená' },
+        { hex: '#facc15', name: 'Žltá' },
+        { hex: '#3b82f6', name: 'Modrá' },
+        { hex: '#22c55e', name: 'Zelená' },
+        { hex: '#18181b', name: 'Čierna' }
+      ];
+
+      const sizes = [
+        { val: 2, label: 'Tenké', dot: 'w-1.5 h-1.5' },
+        { val: 4, label: 'Stredné', dot: 'w-2.5 h-2.5' },
+        { val: 7, label: 'Hrubé', dot: 'w-3.5 h-3.5' }
+      ];
+
+      const canUndo = scriptUndoStack.length > 0;
+      const canRedo = scriptRedoStack.length > 0;
+
+      wrap.innerHTML = `
+        <div class="flex items-center gap-1 shrink-0">
+          ${tools.map(t => {
+            const active = scriptToolState.mode === t.id;
+            return `
+              <button
+                onclick="setScriptToolMode('${t.id}')"
+                class="px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 ${
+                  active ? 'bg-amber-500 text-zinc-950 shadow-xs' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                }"
+              >
+                ${t.icon}
+                <span>${t.label}</span>
+              </button>
+            `;
+          }).join('')}
+
+          <!-- Undo / Redo tlačidlá -->
+          <div class="flex items-center gap-1 pl-1.5 ml-1 border-l border-zinc-800">
+            <button
+              onclick="undoScriptStroke()"
+              ${!canUndo ? 'disabled' : ''}
+              title="Späť (Undo)"
+              class="w-8 h-8 rounded-xl flex items-center justify-center transition ${
+                canUndo ? 'bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950' : 'bg-zinc-800/40 text-zinc-600 cursor-not-allowed'
+              }"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+            </button>
+            <button
+              onclick="redoScriptStroke()"
+              ${!canRedo ? 'disabled' : ''}
+              title="Dopredu (Redo)"
+              class="w-8 h-8 rounded-xl flex items-center justify-center transition ${
+                canRedo ? 'bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950' : 'bg-zinc-800/40 text-zinc-600 cursor-not-allowed'
+              }"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 shrink-0 pl-2 border-l border-zinc-800">
+          <!-- Farby -->
+          <div class="flex items-center gap-1.5">
+            ${colors.map(c => {
+              const active = scriptToolState.color === c.hex;
+              return `
+                <button
+                  onclick="setScriptToolColor('${c.hex}')"
+                  title="${c.name}"
+                  class="w-6 h-6 rounded-full border-2 transition transform ${active ? 'scale-110 border-white ring-2 ring-amber-500/50' : 'border-zinc-700 opacity-75 hover:opacity-100'}"
+                  style="background-color: ${c.hex};"
+                ></button>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Hrúbky pera -->
+          <div class="flex items-center gap-1 bg-zinc-800 p-1 rounded-xl">
+            ${sizes.map(s => {
+              const active = scriptToolState.size === s.val;
+              return `
+                <button
+                  onclick="setScriptToolSize(${s.val})"
+                  title="${s.label}"
+                  class="w-6 h-6 rounded-lg flex items-center justify-center transition ${active ? 'bg-amber-500 text-zinc-950' : 'text-zinc-300 hover:bg-zinc-700'}"
+                >
+                  <span class="${s.dot} rounded-full bg-current"></span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function setScriptToolMode(mode) {
+      scriptToolState.mode = mode;
+      if (mode === 'HIGHLIGHT' && scriptToolState.color === '#18181b') {
+        scriptToolState.color = '#facc15';
+      }
+      renderScriptToolbar();
+      applyScriptToolModeToDOM();
+    }
+
+    function setScriptToolColor(hex) {
+      scriptToolState.color = hex;
+      if (scriptToolState.mode === 'READ' || scriptToolState.mode === 'ERASER') {
+        scriptToolState.mode = 'PEN';
+      }
+      renderScriptToolbar();
+      applyScriptToolModeToDOM();
+    }
+
+    function setScriptToolSize(sz) {
+      scriptToolState.size = sz;
+      if (scriptToolState.mode === 'READ') {
+        scriptToolState.mode = 'PEN';
+      }
+      renderScriptToolbar();
+      applyScriptToolModeToDOM();
+    }
+
+    function applyScriptToolModeToDOM() {
+      const isDrawing = ['PEN', 'HIGHLIGHT', 'ERASER'].includes(scriptToolState.mode);
+      const isText = scriptToolState.mode === 'TEXT';
+      const isSticky = scriptToolState.mode === 'STICKY';
+
+      const paperCont = document.getElementById('scriptPaperContainer');
+      if (paperCont) {
+        if (isDrawing) {
+          paperCont.style.userSelect = 'none';
+          paperCont.style.webkitUserSelect = 'none';
+        } else {
+          paperCont.style.userSelect = '';
+          paperCont.style.webkitUserSelect = '';
+        }
+      }
+
+      document.querySelectorAll('.script-draw-canvas').forEach(cv => {
+        if (isDrawing) {
+          cv.style.pointerEvents = 'auto';
+          cv.style.touchAction = 'none';
+          cv.style.cursor = scriptToolState.mode === 'ERASER' ? 'cell' : 'crosshair';
+        } else {
+          cv.style.pointerEvents = 'none';
+          cv.style.touchAction = 'auto';
+          cv.style.cursor = 'default';
+        }
+      });
+
+      document.querySelectorAll('.script-editable-content').forEach(el => {
+        el.contentEditable = isText ? 'true' : 'false';
+        if (isText) {
+          el.classList.add('ring-2', 'ring-amber-500/40', 'bg-amber-500/5', 'rounded-lg', 'p-2', '-m-2');
+          el.style.cursor = 'text';
+          el.style.userSelect = 'text';
+          el.style.webkitUserSelect = 'text';
+        } else {
+          el.classList.remove('ring-2', 'ring-amber-500/40', 'bg-amber-500/5', 'rounded-lg', 'p-2', '-m-2');
+          el.style.cursor = isSticky ? 'copy' : 'default';
+          el.style.userSelect = isDrawing ? 'none' : '';
+          el.style.webkitUserSelect = isDrawing ? 'none' : '';
+        }
+      });
+    }
 
     function formatScriptLinesHTML(rawDetails) {
       const lines = String(rawDetails || '').split(/\s*\|\|\s*/);
@@ -2897,6 +3115,7 @@
         return `<option value="${escapeHtml(scCode)}" ${scCode === targetSceneCode ? 'selected' : ''}>${escapeHtml(it.title)}</option>`;
       }).join('');
 
+      renderScriptToolbar();
       renderScriptPaperBlocks();
 
       const ov = document.getElementById('scriptReaderOverlay');
@@ -2905,12 +3124,21 @@
       document.body.style.overflow = 'hidden';
 
       setTimeout(() => {
+        initAllScriptCanvases();
+        applyScriptToolModeToDOM();
         if (targetSceneCode) {
           scrollToScriptScene(targetSceneCode);
         } else {
           document.getElementById('scriptReaderScroll').scrollTop = 0;
         }
-      }, 40);
+      }, 50);
+
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+      }
     }
 
     function renderScriptPaperBlocks() {
@@ -2922,25 +3150,619 @@
         const scCode = (it.scenesRaw || '').trim();
         const anchorId = `script-anchor-${scCode || ('UVOD_' + idx)}`;
         const isDone = scCode ? !!project.sceneDone?.[scCode] : false;
+        const innerHtmlContent = it.customHtml || formatScriptLinesHTML(it.details);
+        const stickyList = it.stickyNotes || [];
 
         return `
-          <div id="${escapeHtml(anchorId)}" data-scene-code="${escapeHtml(scCode)}" class="relative pb-8 mb-8 border-b border-zinc-300/80 dark:border-zinc-800 last:border-none transition-all duration-500 ${isDone ? 'opacity-40 grayscale script-done-cross-always-black' : ''}">
+          <div
+            id="${escapeHtml(anchorId)}"
+            data-item-id="${escapeHtml(it.id)}"
+            data-scene-code="${escapeHtml(scCode)}"
+            class="script-block-container relative border-b border-zinc-300/80 dark:border-zinc-800 last:border-none transition-all duration-300 ${isDone ? 'opacity-40 grayscale script-done-cross-always-black' : ''}"
+          >
             ${scCode ? `
-              <button onclick="toggleSceneDoneInScript('${escapeHtml(scCode)}')" class="w-full mb-4 px-4 py-3 rounded-xl font-extrabold text-sm sm:text-base transition flex items-center justify-between shadow-sm ${
-                isDone ? 'bg-emerald-500 text-zinc-950' : 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
-              }">
-                <span>Obraz ${escapeHtml(scCode)}</span>
-                <span class="flex items-center gap-1.5 text-xs sm:text-sm">
-                  ${isDone ? `${ICONS.check} <span>Natočené</span>` : '<span>Označiť ako natočené</span>'}
-                </span>
-              </button>
+              <div class="px-5 sm:px-14 pt-6 pb-2 relative z-30 flex items-center gap-2">
+                <button onclick="event.stopPropagation(); toggleSceneDoneInScript('${escapeHtml(scCode)}')" class="flex-1 px-4 py-3 rounded-xl font-extrabold text-sm sm:text-base transition flex items-center justify-between shadow-xs ${
+                  isDone ? 'bg-emerald-500 text-zinc-950' : 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
+                }">
+                  <span>Obraz ${escapeHtml(scCode)}</span>
+                  <span class="flex items-center gap-1.5 text-xs sm:text-sm">
+                    ${isDone ? `${ICONS.check} <span>Natočené</span>` : '<span>Označiť ako natočené</span>'}
+                  </span>
+                </button>
+                ${(it.strokes && it.strokes.length > 0) ? `
+                  <button onclick="event.stopPropagation(); clearSceneStrokes('${escapeHtml(it.id)}')" title="Vymazať kresby v tomto obraze" class="px-3 py-3 rounded-xl bg-zinc-200 hover:bg-rose-500 hover:text-white text-zinc-700 text-xs font-bold transition shrink-0">
+                    Čistiť kresbu
+                  </button>
+                ` : ''}
+              </div>
             ` : ''}
-            <div class="space-y-3.5">
-              ${formatScriptLinesHTML(it.details)}
+
+            <div
+              id="script-annot-area-${escapeHtml(it.id)}"
+              onclick="handleScriptBlockClick(event, '${escapeHtml(it.id)}')"
+              class="script-annot-area relative px-5 sm:px-14 py-6 sm:py-10"
+            >
+              <div
+                id="script-text-${escapeHtml(it.id)}"
+                onblur="saveScriptEditableText('${escapeHtml(it.id)}', this)"
+                class="script-editable-content space-y-3.5 relative z-10 focus:outline-none"
+              >${innerHtmlContent}</div>
+
+              <canvas
+                id="script-canvas-${escapeHtml(it.id)}"
+                data-item-id="${escapeHtml(it.id)}"
+                class="script-draw-canvas absolute inset-0 z-20 pointer-events-none select-none"
+              ></canvas>
+
+              <div id="script-stickies-${escapeHtml(it.id)}" class="absolute inset-0 z-30 pointer-events-none">
+                ${stickyList.map(st => renderSingleStickyHTML(it.id, st)).join('')}
+              </div>
             </div>
           </div>
         `;
       }).join('');
+    }
+
+    function getStickyDynamicFontSize(text) {
+      const len = (text || '').trim().length;
+      if (len <= 2) return '52px';
+      if (len <= 5) return '40px';
+      if (len <= 10) return '30px';
+      if (len <= 18) return '24px';
+      if (len <= 30) return '19px';
+      if (len <= 50) return '15px';
+      if (len <= 80) return '13px';
+      return '11px';
+    }
+
+    function autoFitStickyText(ta) {
+      if (!ta) return;
+      ta.style.fontSize = getStickyDynamicFontSize(ta.value);
+      ta.style.height = '0px';
+      ta.style.height = (ta.scrollHeight + 4) + 'px';
+    }
+
+    function fitAllStickyTextareas() {
+      document.querySelectorAll('[id^="sticky-text-"]').forEach(ta => {
+        autoFitStickyText(ta);
+      });
+    }
+
+    function renderSingleStickyHTML(itemId, st) {
+      const bgMap = {
+        '#ef4444': 'bg-rose-100 border-rose-400 text-rose-950',
+        '#facc15': 'bg-amber-100 border-amber-400 text-amber-950',
+        '#3b82f6': 'bg-sky-100 border-sky-400 text-sky-950',
+        '#22c55e': 'bg-emerald-100 border-emerald-400 text-emerald-950',
+        '#18181b': 'bg-zinc-200 border-zinc-500 text-zinc-950'
+      };
+      const colorCls = bgMap[st.color] || bgMap['#facc15'];
+      const dynamicSize = getStickyDynamicFontSize(st.text);
+
+      return `
+        <div
+          id="sticky-dom-${escapeHtml(st.id)}"
+          style="left: ${st.x}%; top: ${st.y}px;"
+          onclick="activateStickyText(event, '${escapeHtml(st.id)}')"
+          onpointerdown="handleStickyPointerDown(event, '${escapeHtml(itemId)}', '${escapeHtml(st.id)}')"
+          class="pointer-events-auto absolute w-48 sm:w-56 min-h-[115px] rounded-2xl border-2 shadow-lg p-3 flex items-center justify-center transition-shadow hover:shadow-2xl group cursor-move select-none ${colorCls}"
+          title="Ťahaním posuniete • Kliknutím píšete"
+        >
+          <textarea
+            id="sticky-text-${escapeHtml(st.id)}"
+            rows="1"
+            onfocus="onStickyFocus('${escapeHtml(itemId)}', '${escapeHtml(st.id)}', this)"
+            onblur="onStickyBlur('${escapeHtml(itemId)}', '${escapeHtml(st.id)}', this)"
+            oninput="handleStickyInput('${escapeHtml(itemId)}', '${escapeHtml(st.id)}', this)"
+            placeholder="..."
+            class="w-full bg-transparent font-extrabold leading-tight focus:outline-none resize-none overflow-hidden cursor-move pointer-events-none text-center m-auto"
+            style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: ${dynamicSize};"
+          >${escapeHtml(st.text || '')}</textarea>
+          
+          <button
+            id="sticky-del-${escapeHtml(st.id)}"
+            onclick="event.stopPropagation(); deleteStickyNote('${escapeHtml(itemId)}', '${escapeHtml(st.id)}')"
+            class="hidden absolute -top-2 -right-2 w-5 h-5 rounded-full bg-zinc-900 text-white text-[10px] font-extrabold items-center justify-center transition shadow-md cursor-pointer"
+          >×</button>
+        </div>
+      `;
+    }
+
+    let stickyWasDragged = false;
+
+    function activateStickyText(e, stickyId) {
+      e.stopPropagation();
+      if (stickyWasDragged) {
+        stickyWasDragged = false;
+        return;
+      }
+      const ta = document.getElementById(`sticky-text-${stickyId}`);
+      const delBtn = document.getElementById(`sticky-del-${stickyId}`);
+      if (ta) {
+        ta.classList.remove('pointer-events-none', 'cursor-move');
+        ta.classList.add('cursor-text');
+        autoFitStickyText(ta);
+        ta.focus();
+      }
+      if (delBtn) {
+        delBtn.classList.remove('hidden');
+        delBtn.classList.add('flex');
+      }
+    }
+
+    let stickyOldTextBeforeEdit = '';
+    function onStickyFocus(itemId, stickyId, ta) {
+      stickyOldTextBeforeEdit = ta.value;
+    }
+
+    function onStickyBlur(itemId, stickyId, ta) {
+      ta.classList.add('pointer-events-none', 'cursor-move');
+      ta.classList.remove('cursor-text');
+      const delBtn = document.getElementById(`sticky-del-${stickyId}`);
+      if (delBtn) {
+        delBtn.classList.add('hidden');
+        delBtn.classList.remove('flex');
+      }
+      if (ta.value !== stickyOldTextBeforeEdit) {
+        pushScriptAction({
+          type: 'STICKY_EDIT',
+          itemId,
+          stickyId,
+          oldText: stickyOldTextBeforeEdit,
+          newText: ta.value
+        });
+      }
+    }
+
+    function handleStickyPointerDown(e, itemId, stickyId) {
+      const ta = document.getElementById(`sticky-text-${stickyId}`);
+      // Ak je text už aktívny a fokusnutý, necháme ho písať
+      if (ta && document.activeElement === ta) return;
+      startDragSticky(e, itemId, stickyId);
+    }
+
+    function saveScriptEditableText(itemId, el) {
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === itemId);
+      if (!item) return;
+      item.customHtml = el.innerHTML;
+      // Uložíme aj čistý text pre náhľad v modálnom okne obrazu
+      const paragraphs = Array.from(el.querySelectorAll('p')).map(p => p.innerText.trim()).filter(Boolean);
+      if (paragraphs.length > 0) {
+        item.details = paragraphs.join(' || ');
+      }
+      saveState();
+      renderApp();
+    }
+
+    function pushScriptAction(action) {
+      scriptUndoStack.push(action);
+      scriptRedoStack = [];
+      renderScriptToolbar();
+    }
+
+    function handleScriptBlockClick(e, itemId) {
+      if (scriptToolState.mode !== 'STICKY') return;
+      const area = document.getElementById(`script-annot-area-${itemId}`);
+      if (!area) return;
+
+      const rect = area.getBoundingClientRect();
+      const xPct = Math.max(1, Math.min(85, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
+      const yPx = Math.max(5, Math.round(e.clientY - rect.top));
+
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === itemId);
+      if (!item) return;
+      if (!item.stickyNotes) item.stickyNotes = [];
+
+      const newSticky = {
+        id: 'st_' + Date.now(),
+        x: xPct,
+        y: yPx,
+        color: scriptToolState.color,
+        text: '',
+        minimized: false
+      };
+      item.stickyNotes.push(newSticky);
+
+      pushScriptAction({
+        type: 'STICKY_ADD',
+        itemId,
+        sticky: JSON.parse(JSON.stringify(newSticky))
+      });
+
+      saveState();
+
+      const stickiesWrap = document.getElementById(`script-stickies-${itemId}`);
+      if (stickiesWrap) {
+        stickiesWrap.innerHTML = item.stickyNotes.map(st => renderSingleStickyHTML(itemId, st)).join('');
+      }
+      setScriptToolMode('READ');
+
+      setTimeout(() => {
+        activateStickyText(new Event('click'), newSticky.id);
+      }, 40);
+    }
+
+    function handleStickyInput(itemId, stickyId, ta) {
+      autoFitStickyText(ta);
+      updateStickyText(itemId, stickyId, ta.value);
+    }
+
+    function updateStickyText(itemId, stickyId, val) {
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === itemId);
+      const st = item?.stickyNotes?.find(s => s.id === stickyId);
+      if (st) {
+        st.text = val;
+        saveState();
+      }
+    }
+
+    function deleteStickyNote(itemId, stickyId) {
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === itemId);
+      if (!item || !item.stickyNotes) return;
+      const st = item.stickyNotes.find(s => s.id === stickyId);
+      if (!st) return;
+
+      pushScriptAction({
+        type: 'STICKY_DELETE',
+        itemId,
+        sticky: JSON.parse(JSON.stringify(st))
+      });
+
+      item.stickyNotes = item.stickyNotes.filter(s => s.id !== stickyId);
+      saveState();
+      const stickiesWrap = document.getElementById(`script-stickies-${itemId}`);
+      if (stickiesWrap) {
+        stickiesWrap.innerHTML = item.stickyNotes.map(s => renderSingleStickyHTML(itemId, s)).join('');
+      }
+    }
+
+    function startDragSticky(e, itemId, stickyId) {
+      e.preventDefault();
+      e.stopPropagation();
+      stickyWasDragged = false;
+
+      const domEl = document.getElementById(`sticky-dom-${stickyId}`);
+      const parentEl = document.getElementById(`script-stickies-${itemId}`);
+      if (!domEl || !parentEl) return;
+
+      const parentRect = parentEl.getBoundingClientRect();
+      const startX = e.clientX;
+      const startY = e.clientY;
+
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === itemId);
+      const st = item?.stickyNotes?.find(s => s.id === stickyId);
+      if (!st) return;
+
+      const origX = st.x;
+      const origY = st.y;
+      let moved = false;
+
+      domEl.style.zIndex = '999';
+
+      const onMove = (moveEv) => {
+        const dxPct = ((moveEv.clientX - startX) / parentRect.width) * 100;
+        const dyPx = moveEv.clientY - startY;
+        if (Math.abs(dxPct) > 0.5 || Math.abs(dyPx) > 3) {
+          moved = true;
+          stickyWasDragged = true;
+        }
+        st.x = Math.max(-5, Math.min(88, Math.round(origX + dxPct)));
+        st.y = Math.round(origY + dyPx);
+        domEl.style.left = `${st.x}%`;
+        domEl.style.top = `${st.y}px`;
+      };
+
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        domEl.style.zIndex = '';
+
+        if (moved) {
+          const stickyRect = domEl.getBoundingClientRect();
+          const stickyCenterY = stickyRect.top + stickyRect.height / 2;
+          let targetItemId = itemId;
+          let finalY = st.y;
+
+          document.querySelectorAll('.script-block-container').forEach(block => {
+            const bRect = block.getBoundingClientRect();
+            if (stickyCenterY >= bRect.top && stickyCenterY <= bRect.bottom) {
+              const candidateId = block.getAttribute('data-item-id');
+              const candidateArea = document.getElementById(`script-annot-area-${candidateId}`);
+              if (candidateId && candidateArea) {
+                targetItemId = candidateId;
+                const areaRect = candidateArea.getBoundingClientRect();
+                finalY = Math.round(stickyRect.top - areaRect.top);
+              }
+            }
+          });
+
+          if (targetItemId !== itemId) {
+            const targetItem = project.items.find(i => i.id === targetItemId);
+            if (targetItem) {
+              item.stickyNotes = item.stickyNotes.filter(s => s.id !== stickyId);
+              if (!targetItem.stickyNotes) targetItem.stickyNotes = [];
+              st.y = finalY;
+              targetItem.stickyNotes.push(st);
+              refreshStickiesDOM(itemId);
+              refreshStickiesDOM(targetItemId);
+            }
+          }
+
+          pushScriptAction({
+            type: 'STICKY_MOVE',
+            itemId,
+            targetItemId,
+            stickyId,
+            from: { x: origX, y: origY },
+            to: { x: st.x, y: st.y }
+          });
+          saveState();
+          setTimeout(() => { stickyWasDragged = false; }, 80);
+        }
+      };
+
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    }
+
+    function initAllScriptCanvases() {
+      const project = getCurrentProject();
+      document.querySelectorAll('.script-draw-canvas').forEach(canvas => {
+        const itemId = canvas.getAttribute('data-item-id');
+        const area = document.getElementById(`script-annot-area-${itemId}`) || canvas.parentElement;
+        if (!area) return;
+
+        canvas.style.width = '0px';
+        canvas.style.height = '0px';
+
+        const w = area.offsetWidth || 768;
+        const h = area.offsetHeight || 200;
+        canvas.width = w;
+        canvas.height = h;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+
+        const item = project.items.find(i => i.id === itemId);
+        redrawCanvasStrokes(canvas, item?.strokes || []);
+        bindCanvasDrawingEvents(canvas, itemId);
+      });
+    }
+
+    function redrawCanvasStrokes(canvas, strokes) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      (strokes || []).forEach(stroke => {
+        if (!stroke.points || stroke.points.length === 0) return;
+        ctx.save();
+        if (stroke.mode === 'ERASER') {
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.lineWidth = 22;
+          ctx.strokeStyle = 'rgba(0,0,0,1)';
+        } else if (stroke.mode === 'HIGHLIGHT') {
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.globalAlpha = 0.35;
+          ctx.lineWidth = stroke.size * 4.5;
+          ctx.strokeStyle = stroke.color;
+        } else {
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.globalAlpha = 1;
+          ctx.lineWidth = stroke.size;
+          ctx.strokeStyle = stroke.color;
+        }
+
+        ctx.beginPath();
+        stroke.points.forEach((pt, idx) => {
+          const px = pt.x * canvas.width;
+          const py = pt.y * canvas.height;
+          if (idx === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        });
+        if (stroke.points.length === 1) {
+          const px = stroke.points[0].x * canvas.width;
+          const py = stroke.points[0].y * canvas.height;
+          ctx.lineTo(px + 0.5, py + 0.5);
+        }
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    function bindCanvasDrawingEvents(canvas, itemId) {
+      if (canvas.dataset.bound === '1') return;
+      canvas.dataset.bound = '1';
+
+      let isDown = false;
+      let currentStroke = null;
+
+      const getPos = (e) => {
+        const r = canvas.getBoundingClientRect();
+        return {
+          x: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)),
+          y: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height))
+        };
+      };
+
+      canvas.addEventListener('pointerdown', (e) => {
+        if (!['PEN', 'HIGHLIGHT', 'ERASER'].includes(scriptToolState.mode)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        canvas.setPointerCapture(e.pointerId);
+        isDown = true;
+
+        const project = getCurrentProject();
+        const item = project.items.find(i => i.id === itemId);
+        if (!item) return;
+        if (!item.strokes) item.strokes = [];
+
+        currentStroke = {
+          mode: scriptToolState.mode,
+          color: scriptToolState.color,
+          size: scriptToolState.size,
+          points: [getPos(e)]
+        };
+        item.strokes.push(currentStroke);
+        redrawCanvasStrokes(canvas, item.strokes);
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        if (!isDown || !currentStroke) return;
+        e.preventDefault();
+        currentStroke.points.push(getPos(e));
+        const project = getCurrentProject();
+        const item = project.items.find(i => i.id === itemId);
+        if (item) redrawCanvasStrokes(canvas, item.strokes);
+      });
+
+      const finishStroke = () => {
+        if (!isDown) return;
+        isDown = false;
+        if (currentStroke) {
+          pushScriptAction({ type: 'STROKE', itemId, stroke: currentStroke });
+        }
+        currentStroke = null;
+        saveState();
+      };
+
+      canvas.addEventListener('pointerup', finishStroke);
+      canvas.addEventListener('pointercancel', finishStroke);
+    }
+
+    function undoScriptStroke() {
+      if (scriptUndoStack.length === 0) return;
+      const act = scriptUndoStack.pop();
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === act.itemId);
+
+      if (act.type === 'STROKE' && item && item.strokes && item.strokes.length > 0) {
+        const popped = item.strokes.pop();
+        scriptRedoStack.push({ type: 'STROKE', itemId: act.itemId, stroke: popped });
+        const canvas = document.getElementById(`script-canvas-${act.itemId}`);
+        if (canvas) redrawCanvasStrokes(canvas, item.strokes);
+      } else if (act.type === 'STICKY_ADD' && item && item.stickyNotes) {
+        item.stickyNotes = item.stickyNotes.filter(s => s.id !== act.sticky.id);
+        scriptRedoStack.push(act);
+        refreshStickiesDOM(act.itemId);
+      } else if (act.type === 'STICKY_DELETE' && item) {
+        if (!item.stickyNotes) item.stickyNotes = [];
+        item.stickyNotes.push(act.sticky);
+        scriptRedoStack.push(act);
+        refreshStickiesDOM(act.itemId);
+      } else if (act.type === 'STICKY_MOVE') {
+        const currentHolderId = act.targetItemId || act.itemId;
+        const holderItem = project.items.find(i => i.id === currentHolderId);
+        const origItem = project.items.find(i => i.id === act.itemId);
+        const st = holderItem?.stickyNotes?.find(s => s.id === act.stickyId);
+        if (st && origItem) {
+          if (currentHolderId !== act.itemId) {
+            holderItem.stickyNotes = holderItem.stickyNotes.filter(s => s.id !== act.stickyId);
+            if (!origItem.stickyNotes) origItem.stickyNotes = [];
+            origItem.stickyNotes.push(st);
+          }
+          st.x = act.from.x;
+          st.y = act.from.y;
+          scriptRedoStack.push(act);
+          refreshStickiesDOM(currentHolderId);
+          if (currentHolderId !== act.itemId) refreshStickiesDOM(act.itemId);
+        }
+      } else if (act.type === 'STICKY_EDIT' && item && item.stickyNotes) {
+        const st = item.stickyNotes.find(s => s.id === act.stickyId);
+        if (st) {
+          st.text = act.oldText;
+          scriptRedoStack.push(act);
+          refreshStickiesDOM(act.itemId);
+        }
+      }
+
+      saveState();
+      renderScriptToolbar();
+    }
+
+    function redoScriptStroke() {
+      if (scriptRedoStack.length === 0) return;
+      const act = scriptRedoStack.pop();
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === act.itemId);
+
+      if (act.type === 'STROKE' && item) {
+        if (!item.strokes) item.strokes = [];
+        item.strokes.push(act.stroke);
+        scriptUndoStack.push(act);
+        const canvas = document.getElementById(`script-canvas-${act.itemId}`);
+        if (canvas) redrawCanvasStrokes(canvas, item.strokes);
+      } else if (act.type === 'STICKY_ADD' && item) {
+        if (!item.stickyNotes) item.stickyNotes = [];
+        item.stickyNotes.push(act.sticky);
+        scriptUndoStack.push(act);
+        refreshStickiesDOM(act.itemId);
+      } else if (act.type === 'STICKY_DELETE' && item && item.stickyNotes) {
+        item.stickyNotes = item.stickyNotes.filter(s => s.id !== act.sticky.id);
+        scriptUndoStack.push(act);
+        refreshStickiesDOM(act.itemId);
+      } else if (act.type === 'STICKY_MOVE') {
+        const destId = act.targetItemId || act.itemId;
+        const origItem = project.items.find(i => i.id === act.itemId);
+        const destItem = project.items.find(i => i.id === destId);
+        const st = origItem?.stickyNotes?.find(s => s.id === act.stickyId);
+        if (st && destItem) {
+          if (destId !== act.itemId) {
+            origItem.stickyNotes = origItem.stickyNotes.filter(s => s.id !== act.stickyId);
+            if (!destItem.stickyNotes) destItem.stickyNotes = [];
+            destItem.stickyNotes.push(st);
+          }
+          st.x = act.to.x;
+          st.y = act.to.y;
+          scriptUndoStack.push(act);
+          refreshStickiesDOM(act.itemId);
+          if (destId !== act.itemId) refreshStickiesDOM(destId);
+        }
+      } else if (act.type === 'STICKY_EDIT' && item && item.stickyNotes) {
+        const st = item.stickyNotes.find(s => s.id === act.stickyId);
+        if (st) {
+          st.text = act.newText;
+          scriptUndoStack.push(act);
+          refreshStickiesDOM(act.itemId);
+        }
+      }
+
+      saveState();
+      renderScriptToolbar();
+    }
+
+    function refreshStickiesDOM(itemId) {
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === itemId);
+      const wrap = document.getElementById(`script-stickies-${itemId}`);
+      if (wrap && item) {
+        wrap.innerHTML = (item.stickyNotes || []).map(st => renderSingleStickyHTML(itemId, st)).join('');
+        fitAllStickyTextareas();
+      }
+    }
+
+    function clearSceneStrokes(itemId) {
+      if (!confirm('Vymazať všetky kresby perom v tomto obraze?')) return;
+      const project = getCurrentProject();
+      const item = project.items.find(i => i.id === itemId);
+      if (item) {
+        item.strokes = [];
+        scriptUndoStack = scriptUndoStack.filter(a => a.itemId !== itemId);
+        scriptRedoStack = scriptRedoStack.filter(a => a.itemId !== itemId);
+        saveState();
+        renderScriptToolbar();
+        renderScriptPaperBlocks();
+        setTimeout(() => {
+          initAllScriptCanvases();
+          applyScriptToolModeToDOM();
+        }, 20);
+      }
     }
 
     function toggleSceneDoneInScript(sceneCode) {
@@ -2950,6 +3772,11 @@
       saveState();
       renderApp();
       renderScriptPaperBlocks();
+      setTimeout(() => {
+        initAllScriptCanvases();
+        fitAllStickyTextareas();
+        applyScriptToolModeToDOM();
+      }, 20);
       if (modalStack.length > 0) {
         const top = modalStack[modalStack.length - 1];
         if (top.type === 'SCENE') openSceneModal(top.id, false);
@@ -2967,10 +3794,33 @@
       }
     }
 
+    function updateFontResetBtnUI() {
+      const btn = document.getElementById('scriptFontResetBtn');
+      if (!btn) return;
+      btn.textContent = `${scriptFontSize}px`;
+      if (scriptFontSize !== 16) {
+        btn.classList.remove('text-zinc-400', 'bg-zinc-800');
+        btn.classList.add('bg-amber-500/20', 'text-amber-400', 'border', 'border-amber-500/40');
+      } else {
+        btn.classList.add('text-zinc-400', 'bg-zinc-800');
+        btn.classList.remove('bg-amber-500/20', 'text-amber-400', 'border', 'border-amber-500/40');
+      }
+    }
+
     function adjustScriptFontSize(delta) {
       scriptFontSize = Math.min(26, Math.max(12, scriptFontSize + delta));
       const paper = document.getElementById('scriptPaperContainer');
       if (paper) paper.style.fontSize = `${scriptFontSize}px`;
+      updateFontResetBtnUI();
+      setTimeout(() => initAllScriptCanvases(), 50);
+    }
+
+    function resetScriptFontSize() {
+      scriptFontSize = 16;
+      const paper = document.getElementById('scriptPaperContainer');
+      if (paper) paper.style.fontSize = '16px';
+      updateFontResetBtnUI();
+      setTimeout(() => initAllScriptCanvases(), 50);
     }
 
     function closeScriptReader() {
@@ -2979,6 +3829,16 @@
       ov.classList.remove('flex');
       if (document.getElementById('modalOverlay').classList.contains('hidden')) {
         document.body.style.overflow = '';
+      } else if (modalStack.length > 0 && modalStack[modalStack.length - 1].type === 'SCENE') {
+        openSceneModal(modalStack[modalStack.length - 1].id, false);
+      }
+
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
       }
     }
 
