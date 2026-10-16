@@ -429,8 +429,14 @@
       <!-- Top Row: Navigation & Font Size -->
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-          <button onclick="closeScriptReader()" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center transition shrink-0">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          <button
+            type="button"
+            onpointerdown="event.stopPropagation(); closeScriptReader(event);"
+            onclick="closeScriptReader(event)"
+            title="Späť"
+            class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center transition shrink-0 cursor-pointer touch-manipulation active:scale-95"
+          >
+            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
           </button>
           <select id="scriptJumpSelect" onchange="scrollToScriptScene(this.value)" class="bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs sm:text-sm font-bold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-amber-500 w-full max-w-[180px] sm:max-w-xs truncate">
           </select>
@@ -440,8 +446,14 @@
           <button onclick="adjustScriptFontSize(-1)" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs sm:text-sm font-extrabold flex items-center justify-center transition" title="Zmenšiť písmo">A-</button>
           <button id="scriptFontResetBtn" onclick="resetScriptFontSize()" class="px-2.5 h-9 rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-[11px] font-extrabold flex items-center justify-center transition text-zinc-400" title="Vrátiť pôvodnú veľkosť písma (16px)">16px</button>
           <button onclick="adjustScriptFontSize(1)" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs sm:text-sm font-extrabold flex items-center justify-center transition" title="Zväčšiť písmo">A+</button>
-          <button onclick="closeScriptReader()" class="flex w-9 h-9 rounded-full bg-zinc-800 hover:bg-rose-500 hover:text-white items-center justify-center text-zinc-400 transition ml-1">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          <button
+            type="button"
+            onpointerdown="event.stopPropagation(); closeScriptReader(event);"
+            onclick="closeScriptReader(event)"
+            title="Zavrieť"
+            class="flex w-9 h-9 rounded-full bg-zinc-800 hover:bg-rose-500 hover:text-white items-center justify-center text-zinc-400 transition ml-1 cursor-pointer touch-manipulation active:scale-95"
+          >
+            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
       </div>
@@ -3331,10 +3343,7 @@ let scriptFontSize = 16;
       }, { passive: false });
 
       ov.addEventListener('pointerdown', (e) => {
-        const btn = e.target.closest('button');
-        if (btn && e.pointerType === 'pen') {
-          e.stopPropagation();
-        } else if (e.pointerType === 'pen' && e.target.closest('.script-draw-canvas')) {
+        if (e.pointerType === 'pen' && e.target.closest('.script-draw-canvas')) {
           lastDrawingActivityTime = Date.now();
         }
       }, { capture: true });
@@ -3410,6 +3419,7 @@ let scriptFontSize = 16;
       renderScriptPaperBlocks();
 
       const ov = document.getElementById('scriptReaderOverlay');
+      ov.style.removeProperty('display');
       ov.classList.remove('hidden');
       ov.classList.add('flex');
       document.body.style.overflow = 'hidden';
@@ -4351,21 +4361,31 @@ let scriptFontSize = 16;
       applyScriptFontSize(16);
     }
 
-    function closeScriptReader() {
-      if (Date.now() - lastDrawingActivityTime < 350) return;
+    function closeScriptReader(e) {
+      if (e) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+      }
 
       saveScriptReaderLockState(false, '');
       document.body.classList.remove('script-reader-locked');
+      document.body.style.overflow = '';
 
       const ov = document.getElementById('scriptReaderOverlay');
-      ov.classList.add('hidden');
-      ov.classList.remove('flex');
-      if (document.getElementById('modalOverlay').classList.contains('hidden')) {
-        document.body.style.overflow = '';
-      } else if (modalStack.length > 0 && modalStack[modalStack.length - 1]?.type === 'SCENE') {
+      if (ov) {
+        ov.classList.add('hidden');
+        ov.classList.remove('flex');
+        ov.style.setProperty('display', 'none', 'important');
+      }
+
+      if (modalStack.length > 0 && modalStack[modalStack.length - 1]?.type === 'SCENE') {
         openSceneModal(modalStack[modalStack.length - 1].id, false);
+      } else {
+        closeModal();
       }
     }
+
+    function prepareCanvasesForPrint() {
 
     function prepareCanvasesForPrint() {
       document.querySelectorAll('.script-draw-canvas').forEach(cv => {
