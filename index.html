@@ -138,7 +138,7 @@
 <body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-zinc-950">
 
   <!-- Hidden File Inputs -->
-  <input type="file" id="csvFileInput" accept=".csv,.txt" class="hidden" onchange="handleFileUpload(event)" />
+  <input type="file" id="csvFileInput" accept="*/*" class="hidden" onchange="handleFileUpload(event)" />
   <input type="file" id="backupRestoreInput" accept=".json" class="hidden" onchange="handleFallbackBackupSelected(event)" />
 
   <!-- STICKY HEADER -->
