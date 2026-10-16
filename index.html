@@ -143,60 +143,59 @@
       background: linear-gradient(to bottom right, transparent calc(50% - 0.75px), rgba(244, 244, 245, 0.22) calc(50% - 0.75px), rgba(244, 244, 245, 0.22) calc(50% + 0.75px), transparent calc(50% + 0.75px));
     }
 
+    #scriptPrintMount {
+      display: none;
+    }
+
     @media print {
       @page {
         margin: 10mm;
         size: A4 portrait;
       }
-      html, body {
+      html, body, body.script-reader-locked {
         background-color: #ffffff !important;
-        color: #09090b !important;
+        color: #000000 !important;
         overflow: visible !important;
-        position: static !important;
-        height: auto !important;
-        width: 100% !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-      body.script-reader-locked {
         position: static !important;
         inset: auto !important;
-        overflow: visible !important;
         height: auto !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
       header, main, #modalOverlay, input[type="file"], .no-print, [id^="sticky-del-"] {
         display: none !important;
       }
       #scriptReaderOverlay {
-        position: static !important;
-        inset: auto !important;
-        width: 100% !important;
-        height: auto !important;
-        overflow: visible !important;
-        background-color: #ffffff !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: -99999px !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+      #scriptPrintMount {
         display: block !important;
-      }
-      #scriptReaderOverlay > div:first-child {
-        display: none !important;
-      }
-      #scriptReaderScroll {
-        overflow: visible !important;
-        height: auto !important;
-        padding: 0 !important;
-      }
-      #scriptPaperContainer {
-        box-shadow: none !important;
-        border: none !important;
-        background-color: #ffffff !important;
+        position: static !important;
         width: 100% !important;
         max-width: 768px !important;
         margin: 0 auto !important;
         padding: 0 !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
       }
-      .script-draw-canvas {
+      #scriptPrintMount p,
+      #scriptPrintMount .script-editable-content {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+      }
+      #scriptPrintMount .script-draw-canvas {
         display: none !important;
       }
-      .print-canvas-mirror {
+      #scriptPrintMount .print-canvas-mirror {
         display: block !important;
         position: absolute !important;
         inset: 0 !important;
@@ -204,15 +203,12 @@
         height: 100% !important;
         z-index: 20 !important;
       }
-      body.print-single-scene .script-block-container:not(.print-this-scene) {
-        display: none !important;
-      }
-      .script-block-container {
+      #scriptPrintMount .script-block-container {
         page-break-inside: auto;
         break-inside: auto;
         border-color: #e4e4e7 !important;
       }
-      .script-annot-area textarea {
+      #scriptPrintMount .script-annot-area textarea {
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
@@ -3197,7 +3193,7 @@ function renderScriptToolbar() {
             '<button id="scriptRedoBtn" type="button" onpointerdown="if(event.pointerType===\'pen\' && !this.disabled){event.preventDefault(); redoScriptStroke();}" onclick="redoScriptStroke()" ' + (!canRedo ? 'disabled' : '') + ' title="Dopredu (Redo)" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer ' + redoCls + '">' +
               '<svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>' +
             '</button>' +
-            '<button id="scriptPrintAllBtn" type="button" onpointerdown="if(event.pointerType===\'pen\'){event.preventDefault(); printFullScript();}" onclick="printFullScript()" title="Vytlačiť celý scenár" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer">' +
+            '<button id="scriptPrintAllBtn" type="button" onclick="printFullScript()" title="Vytlačiť celý scenár" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer">' +
               '<svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>' +
             '</button>' +
           '</div>' +
@@ -4402,108 +4398,96 @@ function renderScriptToolbar() {
       }
     }
 
-    function prepareCanvasesForPrint() {
-      document.querySelectorAll('.script-draw-canvas').forEach(cv => {
-        try {
-          if (cv.width > 0 && cv.height > 0) {
-            let img = cv.parentElement.querySelector('.print-canvas-mirror');
-            if (!img) {
-              img = document.createElement('img');
-              img.className = 'print-canvas-mirror pointer-events-none';
-              cv.parentElement.appendChild(img);
-            }
-            img.src = cv.toDataURL('image/png');
-          }
-        } catch (e) {}
-      });
+    let savedPrintScrollTop = null;
+
+    function getOrCreateScriptPrintMount() {
+      let mount = document.getElementById('scriptPrintMount');
+      if (!mount) {
+        mount = document.createElement('div');
+        mount.id = 'scriptPrintMount';
+        document.body.appendChild(mount);
+      }
+      const paper = document.getElementById('scriptPaperContainer');
+      mount.style.fontFamily = "'Courier New', Courier, monospace";
+      mount.style.fontSize = (paper && paper.style.fontSize) ? paper.style.fontSize : `${scriptFontSize}px`;
+      mount.style.lineHeight = '1.55';
+      return mount;
     }
 
-    let lockedPrintScrollTop = null;
-    let lockedPrintSceneCode = '';
-    let printScrollRestoreTimer = null;
-
-    function lockScriptScrollBeforePrint() {
-      const scrollEl = document.getElementById('scriptReaderScroll');
-      const jumpEl = document.getElementById('scriptJumpSelect');
-      if (!scrollEl) return;
-      lockedPrintScrollTop = scrollEl.scrollTop;
-      lockedPrintSceneCode = jumpEl ? jumpEl.value : '';
-
-      if (printScrollRestoreTimer) clearInterval(printScrollRestoreTimer);
-      printScrollRestoreTimer = setInterval(() => {
-        const el = document.getElementById('scriptReaderScroll');
-        if (el && lockedPrintScrollTop !== null && Math.abs(el.scrollTop - lockedPrintScrollTop) > 1) {
-          el.scrollTop = lockedPrintScrollTop;
+    function syncCanvasMirrorOnBlock(blockEl) {
+      if (!blockEl) return;
+      const cv = blockEl.querySelector('.script-draw-canvas');
+      if (!cv || cv.width <= 0 || cv.height <= 0) return;
+      const itemId = blockEl.getAttribute('data-item-id');
+      const project = getCurrentProject();
+      const item = project?.items?.find(i => i.id === itemId);
+      let img = cv.parentElement.querySelector('.print-canvas-mirror');
+      if (!item || !item.strokes || item.strokes.length === 0) {
+        if (img) img.remove();
+        return;
+      }
+      try {
+        if (!img) {
+          img = document.createElement('img');
+          img.className = 'print-canvas-mirror pointer-events-none';
+          cv.parentElement.appendChild(img);
         }
-      }, 80);
+        img.src = cv.toDataURL('image/png');
+      } catch (e) {}
     }
 
-    function restoreScriptScrollAfterPrint() {
-      if (lockedPrintScrollTop === null) return;
-      const scrollEl = document.getElementById('scriptReaderScroll');
-      const jumpEl = document.getElementById('scriptJumpSelect');
-      if (scrollEl) {
-        scrollEl.scrollTop = lockedPrintScrollTop;
-      }
-      if (jumpEl && lockedPrintSceneCode) {
-        jumpEl.value = lockedPrintSceneCode;
-      }
-      saveScriptReaderLockState(true, lockedPrintSceneCode);
+    function cloneBlockForPrint(blockEl) {
+      syncCanvasMirrorOnBlock(blockEl);
+      const clone = blockEl.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+      const origTas = blockEl.querySelectorAll('textarea');
+      const cloneTas = clone.querySelectorAll('textarea');
+      origTas.forEach((ta, idx) => {
+        if (cloneTas[idx]) {
+          cloneTas[idx].value = ta.value;
+          cloneTas[idx].textContent = ta.value;
+        }
+      });
+      return clone;
     }
 
-    function releaseScriptScrollPrintLock() {
-      if (lockedPrintScrollTop !== null) {
-        restoreScriptScrollAfterPrint();
-        lockedPrintScrollTop = null;
-      }
-      if (printScrollRestoreTimer) {
-        clearInterval(printScrollRestoreTimer);
-        printScrollRestoreTimer = null;
+    function restoreScrollPositionAfterPrint() {
+      if (savedPrintScrollTop !== null) {
+        const scrollEl = document.getElementById('scriptReaderScroll');
+        if (scrollEl) scrollEl.scrollTop = savedPrintScrollTop;
       }
     }
 
-    window.addEventListener('afterprint', restoreScriptScrollAfterPrint);
-    window.addEventListener('focus', restoreScriptScrollAfterPrint);
-    window.addEventListener('resize', restoreScriptScrollAfterPrint);
-    document.addEventListener('pointerdown', () => {
-      if (lockedPrintScrollTop !== null) {
-        restoreScriptScrollAfterPrint();
-        setTimeout(releaseScriptScrollPrintLock, 120);
-      }
-    }, { passive: true });
-
-    function cleanupScriptPrint() {
-      document.body.classList.remove('print-single-scene', 'is-printing-script');
-      document.querySelectorAll('.print-this-scene').forEach(el => el.classList.remove('print-this-scene'));
-    }
+    window.addEventListener('afterprint', restoreScrollPositionAfterPrint);
 
     function printFullScript() {
-      lockScriptScrollBeforePrint();
-      cleanupScriptPrint();
-      prepareCanvasesForPrint();
-      document.body.classList.add('is-printing-script');
-      setTimeout(() => {
-        window.print();
-        restoreScriptScrollAfterPrint();
-      }, 70);
+      const scrollEl = document.getElementById('scriptReaderScroll');
+      if (scrollEl) savedPrintScrollTop = scrollEl.scrollTop;
+
+      const mount = getOrCreateScriptPrintMount();
+      mount.innerHTML = '';
+      document.querySelectorAll('#scriptPaperContainer .script-block-container').forEach(block => {
+        mount.appendChild(cloneBlockForPrint(block));
+      });
+
+      window.print();
+      restoreScrollPositionAfterPrint();
     }
 
     function printSingleScene(itemId) {
-      lockScriptScrollBeforePrint();
-      cleanupScriptPrint();
-      prepareCanvasesForPrint();
-      document.body.classList.add('print-single-scene', 'is-printing-script');
-      document.querySelectorAll('.script-block-container').forEach(block => {
-        if (block.getAttribute('data-item-id') === itemId) {
-          block.classList.add('print-this-scene');
-        } else {
-          block.classList.remove('print-this-scene');
-        }
-      });
-      setTimeout(() => {
-        window.print();
-        restoreScriptScrollAfterPrint();
-      }, 70);
+      const scrollEl = document.getElementById('scriptReaderScroll');
+      if (scrollEl) savedPrintScrollTop = scrollEl.scrollTop;
+
+      const targetBlock = document.querySelector(`#scriptPaperContainer .script-block-container[data-item-id="${itemId}"]`);
+      if (!targetBlock) return;
+
+      const mount = getOrCreateScriptPrintMount();
+      mount.innerHTML = '';
+      mount.appendChild(cloneBlockForPrint(targetBlock));
+
+      window.print();
+      restoreScrollPositionAfterPrint();
     }
 
     window.addEventListener('keydown', (e) => {
