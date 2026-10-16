@@ -4351,6 +4351,22 @@ let scriptFontSize = 16;
       applyScriptFontSize(16);
     }
 
+    function closeScriptReader() {
+      if (Date.now() - lastDrawingActivityTime < 350) return;
+
+      saveScriptReaderLockState(false, '');
+      document.body.classList.remove('script-reader-locked');
+
+      const ov = document.getElementById('scriptReaderOverlay');
+      ov.classList.add('hidden');
+      ov.classList.remove('flex');
+      if (document.getElementById('modalOverlay').classList.contains('hidden')) {
+        document.body.style.overflow = '';
+      } else if (modalStack.length > 0 && modalStack[modalStack.length - 1]?.type === 'SCENE') {
+        openSceneModal(modalStack[modalStack.length - 1].id, false);
+      }
+    }
+
     function prepareCanvasesForPrint() {
       document.querySelectorAll('.script-draw-canvas').forEach(cv => {
         try {
