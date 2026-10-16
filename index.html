@@ -425,41 +425,56 @@
   </main>
 
   <div id="scriptReaderOverlay" class="fixed inset-0 z-[60] bg-zinc-950 hidden flex-col" style="-webkit-touch-callout: none; -webkit-user-select: none; user-select: none;">
-    <div class="bg-zinc-900 border-b border-zinc-800 px-3 sm:px-6 pb-2 flex flex-col gap-2 text-zinc-100 shrink-0" style="padding-top: calc(10px + env(safe-area-inset-top, 0px));">
-      <!-- Top Row: Navigation & Font Size -->
-      <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+    <div class="bg-zinc-900 border-b border-zinc-800 px-2.5 sm:px-6 pb-2 flex flex-col gap-2 text-zinc-100 shrink-0" style="padding-top: calc(10px + env(safe-area-inset-top, 0px));">
+      <!-- Top Row: Navigation, Script Tools Toggle & Font Size -->
+      <div class="flex items-center justify-between gap-1.5 sm:gap-2">
+        <div class="flex items-center gap-1.5 sm:gap-2.5 flex-1 min-w-0">
           <button
             type="button"
             onpointerdown="event.stopPropagation(); closeScriptReader(event);"
             onclick="closeScriptReader(event)"
             title="Späť"
-            class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center transition shrink-0 cursor-pointer touch-manipulation active:scale-95"
+            class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center transition shrink-0 cursor-pointer touch-manipulation active:scale-95"
           >
-            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
           </button>
-          <select id="scriptJumpSelect" onchange="scrollToScriptScene(this.value)" class="bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs sm:text-sm font-bold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-amber-500 w-full max-w-[180px] sm:max-w-xs truncate">
+          <select id="scriptJumpSelect" onchange="scrollToScriptScene(this.value)" class="bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl px-2 py-1 sm:px-2.5 sm:py-1.5 focus:outline-none focus:border-amber-500 w-full max-w-[115px] min-[390px]:max-w-[155px] sm:max-w-xs truncate">
           </select>
         </div>
 
-        <div class="flex items-center gap-1.5 shrink-0">
-          <button onclick="adjustScriptFontSize(-1)" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs sm:text-sm font-extrabold flex items-center justify-center transition" title="Zmenšiť písmo">A-</button>
-          <button id="scriptFontResetBtn" onclick="resetScriptFontSize()" class="px-2.5 h-9 rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-[11px] font-extrabold flex items-center justify-center transition text-zinc-400" title="Vrátiť pôvodnú veľkosť písma (16px)">16px</button>
-          <button onclick="adjustScriptFontSize(1)" class="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs sm:text-sm font-extrabold flex items-center justify-center transition" title="Zväčšiť písmo">A+</button>
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          <!-- Tlačidlo na rozbalenie / zbalenie nástrojov kreslenia -->
+          <button
+            id="scriptToolbarToggleBtn"
+            type="button"
+            onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); toggleScriptToolbar();}"
+            onclick="toggleScriptToolbar()"
+            title="Nástroje na písanie a kreslenie"
+            class="h-8 sm:h-9 px-2 sm:px-2.5 rounded-lg sm:rounded-xl bg-zinc-800 text-amber-500 hover:bg-amber-500 hover:text-zinc-950 flex items-center gap-1 font-bold text-xs transition shrink-0 cursor-pointer touch-manipulation active:scale-95 border border-zinc-700/70"
+          >
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+            </svg>
+            <span class="text-[11px] font-extrabold hidden min-[440px]:inline">Kresliť</span>
+          </button>
+
+          <button onclick="adjustScriptFontSize(-1)" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs sm:text-sm font-extrabold flex items-center justify-center transition" title="Zmenšiť písmo">A-</button>
+          <button id="scriptFontResetBtn" onclick="resetScriptFontSize()" class="px-1.5 sm:px-2.5 h-8 sm:h-9 rounded-lg sm:rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-[11px] font-extrabold flex items-center justify-center transition text-zinc-400" title="Vrátiť pôvodnú veľkosť písma (16px)">16px</button>
+          <button onclick="adjustScriptFontSize(1)" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs sm:text-sm font-extrabold flex items-center justify-center transition" title="Zväčšiť písmo">A+</button>
           <button
             type="button"
             onpointerdown="event.stopPropagation(); closeScriptReader(event);"
             onclick="closeScriptReader(event)"
             title="Zavrieť"
-            class="flex w-9 h-9 rounded-full bg-zinc-800 hover:bg-rose-500 hover:text-white items-center justify-center text-zinc-400 transition ml-1 cursor-pointer touch-manipulation active:scale-95"
+            class="flex w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-800 hover:bg-rose-500 hover:text-white items-center justify-center text-zinc-400 transition ml-0.5 cursor-pointer touch-manipulation active:scale-95"
           >
-            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
       </div>
 
-      <!-- Second Row: Interactive Script Annotation Toolbar -->
-      <div id="scriptToolbarWrap" class="flex items-center justify-between gap-2 pt-1.5 border-t border-zinc-800/80 overflow-x-auto no-scrollbar">
+      <!-- Rozbaliteľná lišta nástrojov (2 kompaktné riadky bez horizontálneho posúvania) -->
+      <div id="scriptToolbarWrap" class="hidden flex-col gap-1.5 pt-1.5 border-t border-zinc-800/80">
       </div>
     </div>
     <div id="scriptReaderScroll" class="flex-1 overflow-y-auto p-2 sm:p-6 md:p-10">
@@ -3035,10 +3050,42 @@ let scriptFontSize = 16;
     let scriptUndoStack = [];
     let scriptRedoStack = [];
     let applePencilActive = false;
+    let fingerDrawingEnabled = localStorage.getItem('script_finger_draw') === '1';
+    let scriptToolbarOpen = false;
 
-    window.addEventListener('pointerdown', (e) => {
-      if (e.pointerType === 'pen') applePencilActive = true;
-    }, { capture: true, passive: true });
+    function toggleFingerDrawing() {
+      fingerDrawingEnabled = !fingerDrawingEnabled;
+      try {
+        localStorage.setItem('script_finger_draw', fingerDrawingEnabled ? '1' : '0');
+      } catch (e) {}
+      renderScriptToolbar();
+      applyScriptToolModeToDOM();
+    }
+
+    function toggleScriptToolbar() {
+      scriptToolbarOpen = !scriptToolbarOpen;
+      updateScriptToolbarVisibilityUI();
+      setTimeout(() => {
+        initAllScriptCanvases();
+      }, 30);
+    }
+
+    function updateScriptToolbarVisibilityUI() {
+      const wrap = document.getElementById('scriptToolbarWrap');
+      const btn = document.getElementById('scriptToolbarToggleBtn');
+      if (!wrap || !btn) return;
+      if (scriptToolbarOpen) {
+        wrap.classList.remove('hidden');
+        wrap.classList.add('flex');
+        btn.classList.add('bg-amber-500', 'text-zinc-950', 'border-amber-400');
+        btn.classList.remove('bg-zinc-800', 'text-amber-500', 'border-zinc-700/70');
+      } else {
+        wrap.classList.add('hidden');
+        wrap.classList.remove('flex');
+        btn.classList.remove('bg-amber-500', 'text-zinc-950', 'border-amber-400');
+        btn.classList.add('bg-zinc-800', 'text-amber-500', 'border-zinc-700/70');
+      }
+    }
 
     let scriptToolState = {
       mode: 'READ',
@@ -3047,6 +3094,184 @@ let scriptFontSize = 16;
     };
 
     function renderScriptToolbar() {
+      const wrap = document.getElementById('scriptToolbarWrap');
+      if (!wrap) return;
+
+      const tools = [
+        {
+          id: 'READ',
+          label: 'Posun',
+          icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/></svg>`
+        },
+        {
+          id: 'PEN',
+          label: 'Pero',
+          icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`
+        },
+        {
+          id: 'HIGHLIGHT',
+          label: 'Fixka',
+          icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.5 3.5l6 6-9 9H5.5v-6l9-9zM3 21h8"/></svg>`
+        },
+        {
+          id: 'ERASER',
+          label: 'Guma',
+          icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 8.636l-8.486 8.486a2 2 0 01-2.828 0L3.515 13.586a2 2 0 010-2.828l8.486-8.486a2 2 0 012.828 0l3.535 3.536a2 2 0 010 2.828zM6.343 16.414l5.657-5.657M3 21h18"/></svg>`
+        },
+        {
+          id: 'TEXT',
+          label: 'Písať text',
+          icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 6h14M12 6v13m-2.5 0h5"/></svg>`
+        },
+        {
+          id: 'STICKY',
+          label: 'Štítok',
+          icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h9l6-6V5a2 2 0 00-2-2zM14 15v6l6-6h-6z"/></svg>`
+        }
+      ];
+
+      const colors = [
+        { hex: '#ef4444', name: 'Červená' },
+        { hex: '#facc15', name: 'Žltá' },
+        { hex: '#3b82f6', name: 'Modrá' },
+        { hex: '#22c55e', name: 'Zelená' },
+        { hex: '#18181b', name: 'Čierna' }
+      ];
+
+      const sizes = [
+        { val: 2, label: 'Tenké / Malá guma', dot: 'w-1.5 h-1.5' },
+        { val: 4, label: 'Stredné / 3 cm guma', dot: 'w-2 sm:w-2.5 h-2 sm:h-2.5' },
+        { val: 7, label: 'Hrubé / 6 cm guma', dot: 'w-3 sm:w-3.5 h-3 sm:h-3.5' }
+      ];
+
+      const canUndo = scriptUndoStack.length > 0;
+      const canRedo = scriptRedoStack.length > 0;
+
+      wrap.innerHTML = `
+        <!-- Riadok 1: 6 Nástrojov + Prepínač prsta (Zmestí sa na každý displej) -->
+        <div class="flex items-center justify-between w-full gap-1">
+          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            ${tools.map(t => {
+              const active = scriptToolState.mode === t.id;
+              return `
+                <button
+                  type="button"
+                  onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); setScriptToolMode('${t.id}');}"
+                  onclick="setScriptToolMode('${t.id}')"
+                  title="${t.label}"
+                  class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer ${
+                    active ? 'bg-amber-500 text-zinc-950 shadow-xs' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                  }"
+                >
+                  ${t.icon}
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Prepínač Prst posúva / Prst kreslí -->
+          <button
+            id="scriptFingerModeBtn"
+            type="button"
+            onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); toggleFingerDrawing();}"
+            onclick="toggleFingerDrawing()"
+            title="${fingerDrawingEnabled ? 'Prst kreslí. Kliknutím zapnete posúvanie prstom.' : 'Inteligentné pero aktívne (prst iba posúva).'}"
+            class="h-8 sm:h-9 px-2 sm:px-2.5 rounded-lg sm:rounded-xl flex items-center gap-1 sm:gap-1.5 transition shrink-0 touch-manipulation cursor-pointer ${
+              fingerDrawingEnabled
+                ? 'bg-amber-500 text-zinc-950 font-bold shadow-xs'
+                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+            }"
+          >
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/>
+            </svg>
+            <span class="text-[10.5px] sm:text-[11px] font-extrabold whitespace-nowrap">${fingerDrawingEnabled ? 'Prst kreslí' : 'Prst posúva'}</span>
+          </button>
+        </div>
+
+        <!-- Riadok 2: Farby + Hrúbky + Späť / Dopredu / Tlač -->
+        <div class="flex items-center justify-between w-full gap-1 pt-1 border-t border-zinc-800/50">
+          <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+            <!-- 5 Farieb -->
+            <div class="flex items-center gap-1 sm:gap-1.5">
+              ${colors.map(c => {
+                const active = scriptToolState.color === c.hex;
+                return `
+                  <button
+                    type="button"
+                    onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); setScriptToolColor('${c.hex}');}"
+                    onclick="setScriptToolColor('${c.hex}')"
+                    title="${c.name}"
+                    class="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 transition transform touch-manipulation cursor-pointer ${active ? 'scale-110 border-white ring-2 ring-amber-500/50' : 'border-zinc-700 opacity-75 hover:opacity-100'}"
+                    style="background-color: ${c.hex};"
+                  ></button>
+                `;
+              }).join('')}
+            </div>
+
+            <!-- 3 Hrúbky pera -->
+            <div class="flex items-center gap-0.5 sm:gap-1 bg-zinc-800 p-0.5 sm:p-1 rounded-lg sm:rounded-xl">
+              ${sizes.map(s => {
+                const active = scriptToolState.size === s.val;
+                return `
+                  <button
+                    type="button"
+                    onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); setScriptToolSize(${s.val});}"
+                    onclick="setScriptToolSize(${s.val})"
+                    title="${s.label}"
+                    class="w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg flex items-center justify-center transition touch-manipulation cursor-pointer ${active ? 'bg-amber-500 text-zinc-950' : 'text-zinc-300 hover:bg-zinc-700'}"
+                  >
+                    <span class="${s.dot} rounded-full bg-current"></span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Undo, Redo, Tlač -->
+          <div class="flex items-center gap-1 shrink-0">
+            <button
+              id="scriptUndoBtn"
+              type="button"
+              onpointerdown="if(event.pointerType==='pen' && !this.disabled){event.preventDefault(); undoScriptStroke();}"
+              onclick="undoScriptStroke()"
+              ${!canUndo ? 'disabled' : ''}
+              title="Späť (Undo)"
+              class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer ${
+                canUndo ? 'bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950' : 'bg-zinc-800/40 text-zinc-600 cursor-not-allowed'
+              }"
+            >
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+            </button>
+            <button
+              id="scriptRedoBtn"
+              type="button"
+              onpointerdown="if(event.pointerType==='pen' && !this.disabled){event.preventDefault(); redoScriptStroke();}"
+              onclick="redoScriptStroke()"
+              ${!canRedo ? 'disabled' : ''}
+              title="Dopredu (Redo)"
+              class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer ${
+                canRedo ? 'bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950' : 'bg-zinc-800/40 text-zinc-600 cursor-not-allowed'
+              }"
+            >
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>
+            </button>
+            <button
+              id="scriptPrintAllBtn"
+              type="button"
+              onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); printFullScript();}"
+              onclick="printFullScript()"
+              title="Vytlačiť celý scenár"
+              class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            </button>
+          </div>
+        </div>
+      `;
+
+      updateScriptToolbarVisibilityUI();
+    }
       const wrap = document.getElementById('scriptToolbarWrap');
       if (!wrap) return;
 
@@ -3120,6 +3345,23 @@ let scriptFontSize = 16;
           }).join('')}
 
           <div class="flex items-center gap-1 pl-1.5 ml-0.5 border-l border-zinc-800">
+            <button
+              id="scriptFingerModeBtn"
+              type="button"
+              onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); toggleFingerDrawing();}"
+              onclick="toggleFingerDrawing()"
+              title="${fingerDrawingEnabled ? 'Kreslenie prstom je ZAPNUTÉ. Kliknutím zapnete inteligentné pero (prst iba posúva, pero píše).' : 'Inteligentné pero je AKTÍVNE: Pero kreslí, dlaň a prst len posúvajú. Kliknutím povolíte kreslenie prstom.'}"
+              class="h-9 px-2.5 rounded-xl flex items-center gap-1.5 transition shrink-0 touch-manipulation cursor-pointer ${
+                fingerDrawingEnabled
+                  ? 'bg-amber-500 text-zinc-950 font-bold shadow-xs'
+                  : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+              }"
+            >
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/>
+              </svg>
+              <span class="text-[11px] font-extrabold whitespace-nowrap">${fingerDrawingEnabled ? 'Prst kreslí' : 'Prst posúva'}</span>
+            </button>
             <button
               id="scriptUndoBtn"
               type="button"
@@ -3230,7 +3472,7 @@ let scriptFontSize = 16;
 
       const scrollCont = document.getElementById('scriptReaderScroll');
       if (scrollCont) {
-        if (isDrawing) {
+        if (isDrawing && fingerDrawingEnabled) {
           scrollCont.style.touchAction = 'none';
           scrollCont.style.overflowY = 'hidden';
         } else {
@@ -3241,14 +3483,14 @@ let scriptFontSize = 16;
 
       const paperCont = document.getElementById('scriptPaperContainer');
       if (paperCont) {
-        if (isDrawing) {
+        if (isDrawing && fingerDrawingEnabled) {
           paperCont.style.touchAction = 'none';
           paperCont.style.userSelect = 'none';
           paperCont.style.webkitUserSelect = 'none';
         } else {
-          paperCont.style.touchAction = '';
-          paperCont.style.userSelect = '';
-          paperCont.style.webkitUserSelect = '';
+          paperCont.style.touchAction = 'pan-y';
+          paperCont.style.userSelect = (isDrawing && fingerDrawingEnabled) ? 'none' : '';
+          paperCont.style.webkitUserSelect = (isDrawing && fingerDrawingEnabled) ? 'none' : '';
         }
       }
 
@@ -3259,7 +3501,7 @@ let scriptFontSize = 16;
       document.querySelectorAll('.script-draw-canvas').forEach(cv => {
         if (isDrawing) {
           cv.style.pointerEvents = 'auto';
-          cv.style.touchAction = 'none';
+          cv.style.touchAction = fingerDrawingEnabled ? 'none' : 'pan-y';
           cv.style.cursor = scriptToolState.mode === 'ERASER' ? 'cell' : 'crosshair';
         } else {
           cv.style.pointerEvents = 'none';
@@ -3279,8 +3521,8 @@ let scriptFontSize = 16;
           el.removeAttribute('contenteditable');
           el.classList.remove('ring-2', 'ring-amber-500/40', 'bg-amber-500/5', 'rounded-lg', 'p-2', '-m-2');
           el.style.cursor = isSticky ? 'copy' : 'default';
-          el.style.userSelect = isDrawing ? 'none' : '';
-          el.style.webkitUserSelect = isDrawing ? 'none' : '';
+          el.style.userSelect = (isDrawing && fingerDrawingEnabled) ? 'none' : '';
+          el.style.webkitUserSelect = (isDrawing && fingerDrawingEnabled) ? 'none' : '';
         }
       });
     }
@@ -3415,7 +3657,9 @@ let scriptFontSize = 16;
         return `<option value="${escapeHtml(scCode)}" ${scCode === targetSceneCode ? 'selected' : ''}>${escapeHtml(it.title)}</option>`;
       }).join('');
 
+      scriptToolbarOpen = false;
       renderScriptToolbar();
+      updateScriptToolbarVisibilityUI();
       renderScriptPaperBlocks();
 
       const ov = document.getElementById('scriptReaderOverlay');
@@ -3462,7 +3706,7 @@ let scriptFontSize = 16;
             class="script-block-container relative border-b border-zinc-300/80 dark:border-zinc-800 last:border-none transition-all duration-300 ${isDone ? 'opacity-40 grayscale script-done-cross-always-black' : ''}"
           >
             ${scCode ? `
-              <div class="px-5 sm:px-14 pt-6 pb-2 relative z-30 flex items-center gap-2">
+              <div class="no-print px-5 sm:px-14 pt-6 pb-2 relative z-30 flex items-center gap-2">
                 <button onclick="event.stopPropagation(); toggleSceneDoneInScript('${escapeHtml(scCode)}')" class="flex-1 px-4 py-3 rounded-xl font-extrabold text-sm sm:text-base transition flex items-center justify-between shadow-xs ${
                   isDone ? 'bg-emerald-500 text-zinc-950' : 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
                 }">
@@ -3984,8 +4228,10 @@ let scriptFontSize = 16;
 
       const blockTouchIfDrawing = (te) => {
         if (['PEN', 'HIGHLIGHT', 'ERASER'].includes(scriptToolState.mode)) {
-          if (te.cancelable) te.preventDefault();
-          te.stopPropagation();
+          if (fingerDrawingEnabled) {
+            if (te.cancelable) te.preventDefault();
+            te.stopPropagation();
+          }
         }
       };
 
@@ -4006,11 +4252,14 @@ let scriptFontSize = 16;
       canvas.addEventListener('pointerdown', (e) => {
         if (!['PEN', 'HIGHLIGHT', 'ERASER'].includes(scriptToolState.mode)) return;
 
-        if (e.pointerType === 'pen') {
-          applePencilActive = true;
-        } else if (e.pointerType === 'touch') {
-          if (applePencilActive) return;
-          if ((e.width && e.width > 20) || (e.height && e.height > 20)) return;
+        // Inteligentné pero: Ak je kreslenie prstom vypnuté, prst ani dlaň nekreslia (iba posúvajú text)
+        if (e.pointerType === 'touch' && !fingerDrawingEnabled) {
+          return;
+        }
+
+        // Ak je kreslenie prstom zapnuté, filtrujeme iba veľkú dlaň
+        if (e.pointerType === 'touch' && fingerDrawingEnabled) {
+          if ((e.width && e.width > 85) || (e.height && e.height > 85)) return;
         }
 
         const project = getCurrentProject();
@@ -4411,16 +4660,16 @@ let scriptFontSize = 16;
     window.addEventListener('afterprint', cleanupScriptPrint);
 
     function printFullScript() {
-      prepareCanvasesForPrint();
       cleanupScriptPrint();
+      prepareCanvasesForPrint();
       document.body.classList.add('is-printing-script');
       setTimeout(() => {
         window.print();
-        setTimeout(cleanupScriptPrint, 2500);
       }, 70);
     }
 
     function printSingleScene(itemId) {
+      cleanupScriptPrint();
       prepareCanvasesForPrint();
       document.body.classList.add('print-single-scene', 'is-printing-script');
       document.querySelectorAll('.script-block-container').forEach(block => {
@@ -4432,7 +4681,6 @@ let scriptFontSize = 16;
       });
       setTimeout(() => {
         window.print();
-        setTimeout(cleanupScriptPrint, 2500);
       }, 70);
     }
 
