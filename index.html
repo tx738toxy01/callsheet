@@ -47,6 +47,15 @@
       overscroll-behavior: none !important;
       -webkit-overflow-scrolling: touch;
     }
+    #scriptPaperContainer,
+    #scriptPaperContainer p,
+    .script-editable-content,
+    .script-editable-content p,
+    [id^="modal-script-text-"],
+    [id^="modal-script-text-"] p {
+      color: #000000 !important;
+      -webkit-text-fill-color: #000000 !important;
+    }
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       -webkit-tap-highlight-color: transparent;
@@ -3101,32 +3110,32 @@ function renderScriptToolbar() {
         {
           id: 'READ',
           label: 'Posun',
-          icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/></svg>`
+          icon: '<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/></svg>'
         },
         {
           id: 'PEN',
           label: 'Pero',
-          icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`
+          icon: '<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>'
         },
         {
           id: 'HIGHLIGHT',
           label: 'Fixka',
-          icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.5 3.5l6 6-9 9H5.5v-6l9-9zM3 21h8"/></svg>`
+          icon: '<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.5 3.5l6 6-9 9H5.5v-6l9-9zM3 21h8"/></svg>'
         },
         {
           id: 'ERASER',
           label: 'Guma',
-          icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 8.636l-8.486 8.486a2 2 0 01-2.828 0L3.515 13.586a2 2 0 010-2.828l8.486-8.486a2 2 0 012.828 0l3.535 3.536a2 2 0 010 2.828zM6.343 16.414l5.657-5.657M3 21h18"/></svg>`
+          icon: '<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 8.636l-8.486 8.486a2 2 0 01-2.828 0L3.515 13.586a2 2 0 010-2.828l8.486-8.486a2 2 0 012.828 0l3.535 3.536a2 2 0 010 2.828zM6.343 16.414l5.657-5.657M3 21h18"/></svg>'
         },
         {
           id: 'TEXT',
           label: 'Písať text',
-          icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 6h14M12 6v13m-2.5 0h5"/></svg>`
+          icon: '<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 6h14M12 6v13m-2.5 0h5"/></svg>'
         },
         {
           id: 'STICKY',
           label: 'Štítok',
-          icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h9l6-6V5a2 2 0 00-2-2zM14 15v6l6-6h-6z"/></svg>`
+          icon: '<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h9l6-6V5a2 2 0 00-2-2zM14 15v6l6-6h-6z"/></svg>'
         }
       ];
 
@@ -3147,122 +3156,52 @@ function renderScriptToolbar() {
       const canUndo = scriptUndoStack.length > 0;
       const canRedo = scriptRedoStack.length > 0;
 
-      wrap.innerHTML = `
-        <div class="flex items-center justify-between w-full gap-1">
-          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
-            ${tools.map(t => {
-              const active = scriptToolState.mode === t.id;
-              return `
-                <button
-                  type="button"
-                  onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); setScriptToolMode('${t.id}');}"
-                  onclick="setScriptToolMode('${t.id}')"
-                  title="${t.label}"
-                  class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer ${
-                    active ? 'bg-amber-500 text-zinc-950 shadow-xs' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                  }"
-                >
-                  ${t.icon}
-                </button>
-              `;
-            }).join('')}
-          </div>
+      const toolsHtml = tools.map(t => {
+        const active = scriptToolState.mode === t.id;
+        const cls = active ? 'bg-amber-500 text-zinc-950 shadow-xs' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700';
+        return '<button type="button" onpointerdown="if(event.pointerType===\'pen\'){event.preventDefault(); setScriptToolMode(\'' + t.id + '\');}" onclick="setScriptToolMode(\'' + t.id + '\')" title="' + t.label + '" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer ' + cls + '">' + t.icon + '</button>';
+      }).join('');
 
-          <button
-            id="scriptFingerModeBtn"
-            type="button"
-            onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); toggleFingerDrawing();}"
-            onclick="toggleFingerDrawing()"
-            title="${fingerDrawingEnabled ? 'Prst kreslí. Kliknutím zapnete posúvanie prstom.' : 'Inteligentné pero aktívne (prst iba posúva).'}"
-            class="h-8 sm:h-9 px-2 sm:px-2.5 rounded-lg sm:rounded-xl flex items-center gap-1 sm:gap-1.5 transition shrink-0 touch-manipulation cursor-pointer ${
-              fingerDrawingEnabled
-                ? 'bg-amber-500 text-zinc-950 font-bold shadow-xs'
-                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-            }"
-          >
-            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/>
-            </svg>
-            <span class="text-[10.5px] sm:text-[11px] font-extrabold whitespace-nowrap">${fingerDrawingEnabled ? 'Prst kreslí' : 'Prst posúva'}</span>
-          </button>
-        </div>
+      const colorsHtml = colors.map(c => {
+        const active = scriptToolState.color === c.hex;
+        const cls = active ? 'scale-110 border-white ring-2 ring-amber-500/50' : 'border-zinc-700 opacity-75 hover:opacity-100';
+        return '<button type="button" onpointerdown="if(event.pointerType===\'pen\'){event.preventDefault(); setScriptToolColor(\'' + c.hex + '\');}" onclick="setScriptToolColor(\'' + c.hex + '\')" title="' + c.name + '" class="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 transition transform touch-manipulation cursor-pointer ' + cls + '" style="background-color: ' + c.hex + ';"></button>';
+      }).join('');
 
-        <div class="flex items-center justify-between w-full gap-1 pt-1 border-t border-zinc-800/50">
-          <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-            <div class="flex items-center gap-1 sm:gap-1.5">
-              ${colors.map(c => {
-                const active = scriptToolState.color === c.hex;
-                return `
-                  <button
-                    type="button"
-                    onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); setScriptToolColor('${c.hex}');}"
-                    onclick="setScriptToolColor('${c.hex}')"
-                    title="${c.name}"
-                    class="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 transition transform touch-manipulation cursor-pointer ${active ? 'scale-110 border-white ring-2 ring-amber-500/50' : 'border-zinc-700 opacity-75 hover:opacity-100'}"
-                    style="background-color: ${c.hex};"
-                  ></button>
-                `;
-              }).join('')}
-            </div>
+      const sizesHtml = sizes.map(s => {
+        const active = scriptToolState.size === s.val;
+        const cls = active ? 'bg-amber-500 text-zinc-950' : 'text-zinc-300 hover:bg-zinc-700';
+        return '<button type="button" onpointerdown="if(event.pointerType===\'pen\'){event.preventDefault(); setScriptToolSize(' + s.val + ');}" onclick="setScriptToolSize(' + s.val + ')" title="' + s.label + '" class="w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg flex items-center justify-center transition touch-manipulation cursor-pointer ' + cls + '"><span class="' + s.dot + ' rounded-full bg-current"></span></button>';
+      }).join('');
 
-            <div class="flex items-center gap-0.5 sm:gap-1 bg-zinc-800 p-0.5 sm:p-1 rounded-lg sm:rounded-xl">
-              ${sizes.map(s => {
-                const active = scriptToolState.size === s.val;
-                return `
-                  <button
-                    type="button"
-                    onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); setScriptToolSize(${s.val});}"
-                    onclick="setScriptToolSize(${s.val})"
-                    title="${s.label}"
-                    class="w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg flex items-center justify-center transition touch-manipulation cursor-pointer ${active ? 'bg-amber-500 text-zinc-950' : 'text-zinc-300 hover:bg-zinc-700'}"
-                  >
-                    <span class="${s.dot} rounded-full bg-current"></span>
-                  </button>
-                `;
-              }).join('')}
-            </div>
-          </div>
+      const fingerCls = fingerDrawingEnabled ? 'bg-amber-500 text-zinc-950 font-bold shadow-xs' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700';
+      const fingerTitle = fingerDrawingEnabled ? 'Prst kreslí. Kliknutím zapnete posúvanie prstom.' : 'Inteligentné pero aktívne (prst iba posúva).';
+      const fingerLabel = fingerDrawingEnabled ? 'Prst kreslí' : 'Prst posúva';
 
-          <div class="flex items-center gap-1 shrink-0">
-            <button
-              id="scriptUndoBtn"
-              type="button"
-              onpointerdown="if(event.pointerType==='pen' && !this.disabled){event.preventDefault(); undoScriptStroke();}"
-              onclick="undoScriptStroke()"
-              ${!canUndo ? 'disabled' : ''}
-              title="Späť (Undo)"
-              class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer ${
-                canUndo ? 'bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950' : 'bg-zinc-800/40 text-zinc-600 cursor-not-allowed'
-              }"
-            >
-              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-            </button>
-            <button
-              id="scriptRedoBtn"
-              type="button"
-              onpointerdown="if(event.pointerType==='pen' && !this.disabled){event.preventDefault(); redoScriptStroke();}"
-              onclick="redoScriptStroke()"
-              ${!canRedo ? 'disabled' : ''}
-              title="Dopredu (Redo)"
-              class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer ${
-                canRedo ? 'bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950' : 'bg-zinc-800/40 text-zinc-600 cursor-not-allowed'
-              }"
-            >
-              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>
-            </button>
-            <button
-              id="scriptPrintAllBtn"
-              type="button"
-              onpointerdown="if(event.pointerType==='pen'){event.preventDefault(); printFullScript();}"
-              onclick="printFullScript()"
-              title="Vytlačiť celý scenár"
-              class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer"
-            >
-              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-            </button>
-          </div>
-        </div>
-      `;
+      const undoCls = canUndo ? 'bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950' : 'bg-zinc-800/40 text-zinc-600 cursor-not-allowed';
+      const redoCls = canRedo ? 'bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950' : 'bg-zinc-800/40 text-zinc-600 cursor-not-allowed';
+
+      wrap.innerHTML =
+        '<div class="flex flex-wrap items-center justify-between w-full gap-1.5 sm:gap-2">' +
+          '<div class="flex items-center gap-1 sm:gap-1.5 shrink-0">' + toolsHtml + '</div>' +
+          '<button id="scriptFingerModeBtn" type="button" onpointerdown="if(event.pointerType===\'pen\'){event.preventDefault(); toggleFingerDrawing();}" onclick="toggleFingerDrawing()" title="' + fingerTitle + '" class="h-8 sm:h-9 px-2 sm:px-2.5 rounded-lg sm:rounded-xl flex items-center gap-1 sm:gap-1.5 transition shrink-0 touch-manipulation cursor-pointer ' + fingerCls + '">' +
+            '<svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/></svg>' +
+            '<span class="text-[10.5px] sm:text-[11px] font-extrabold whitespace-nowrap">' + fingerLabel + '</span>' +
+          '</button>' +
+          '<div class="flex items-center gap-1 sm:gap-1.5 shrink-0">' + colorsHtml + '</div>' +
+          '<div class="flex items-center gap-0.5 sm:gap-1 bg-zinc-800 p-0.5 sm:p-1 rounded-lg sm:rounded-xl shrink-0">' + sizesHtml + '</div>' +
+          '<div class="flex items-center gap-1 shrink-0">' +
+            '<button id="scriptUndoBtn" type="button" onpointerdown="if(event.pointerType===\'pen\' && !this.disabled){event.preventDefault(); undoScriptStroke();}" onclick="undoScriptStroke()" ' + (!canUndo ? 'disabled' : '') + ' title="Späť (Undo)" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer ' + undoCls + '">' +
+              '<svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>' +
+            '</button>' +
+            '<button id="scriptRedoBtn" type="button" onpointerdown="if(event.pointerType===\'pen\' && !this.disabled){event.preventDefault(); redoScriptStroke();}" onclick="redoScriptStroke()" ' + (!canRedo ? 'disabled' : '') + ' title="Dopredu (Redo)" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer ' + redoCls + '">' +
+              '<svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>' +
+            '</button>' +
+            '<button id="scriptPrintAllBtn" type="button" onpointerdown="if(event.pointerType===\'pen\'){event.preventDefault(); printFullScript();}" onclick="printFullScript()" title="Vytlačiť celý scenár" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-zinc-800 text-zinc-200 hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center transition shrink-0 touch-manipulation cursor-pointer">' +
+              '<svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>' +
+            '</button>' +
+          '</div>' +
+        '</div>';
 
       updateScriptToolbarVisibilityUI();
     }
@@ -4479,23 +4418,78 @@ function renderScriptToolbar() {
       });
     }
 
+    let lockedPrintScrollTop = null;
+    let lockedPrintSceneCode = '';
+    let printScrollRestoreTimer = null;
+
+    function lockScriptScrollBeforePrint() {
+      const scrollEl = document.getElementById('scriptReaderScroll');
+      const jumpEl = document.getElementById('scriptJumpSelect');
+      if (!scrollEl) return;
+      lockedPrintScrollTop = scrollEl.scrollTop;
+      lockedPrintSceneCode = jumpEl ? jumpEl.value : '';
+
+      if (printScrollRestoreTimer) clearInterval(printScrollRestoreTimer);
+      printScrollRestoreTimer = setInterval(() => {
+        const el = document.getElementById('scriptReaderScroll');
+        if (el && lockedPrintScrollTop !== null && Math.abs(el.scrollTop - lockedPrintScrollTop) > 1) {
+          el.scrollTop = lockedPrintScrollTop;
+        }
+      }, 80);
+    }
+
+    function restoreScriptScrollAfterPrint() {
+      if (lockedPrintScrollTop === null) return;
+      const scrollEl = document.getElementById('scriptReaderScroll');
+      const jumpEl = document.getElementById('scriptJumpSelect');
+      if (scrollEl) {
+        scrollEl.scrollTop = lockedPrintScrollTop;
+      }
+      if (jumpEl && lockedPrintSceneCode) {
+        jumpEl.value = lockedPrintSceneCode;
+      }
+      saveScriptReaderLockState(true, lockedPrintSceneCode);
+    }
+
+    function releaseScriptScrollPrintLock() {
+      if (lockedPrintScrollTop !== null) {
+        restoreScriptScrollAfterPrint();
+        lockedPrintScrollTop = null;
+      }
+      if (printScrollRestoreTimer) {
+        clearInterval(printScrollRestoreTimer);
+        printScrollRestoreTimer = null;
+      }
+    }
+
+    window.addEventListener('afterprint', restoreScriptScrollAfterPrint);
+    window.addEventListener('focus', restoreScriptScrollAfterPrint);
+    window.addEventListener('resize', restoreScriptScrollAfterPrint);
+    document.addEventListener('pointerdown', () => {
+      if (lockedPrintScrollTop !== null) {
+        restoreScriptScrollAfterPrint();
+        setTimeout(releaseScriptScrollPrintLock, 120);
+      }
+    }, { passive: true });
+
     function cleanupScriptPrint() {
       document.body.classList.remove('print-single-scene', 'is-printing-script');
       document.querySelectorAll('.print-this-scene').forEach(el => el.classList.remove('print-this-scene'));
     }
 
-    window.addEventListener('afterprint', cleanupScriptPrint);
-
     function printFullScript() {
+      lockScriptScrollBeforePrint();
       cleanupScriptPrint();
       prepareCanvasesForPrint();
       document.body.classList.add('is-printing-script');
       setTimeout(() => {
         window.print();
+        restoreScriptScrollAfterPrint();
       }, 70);
     }
 
     function printSingleScene(itemId) {
+      lockScriptScrollBeforePrint();
       cleanupScriptPrint();
       prepareCanvasesForPrint();
       document.body.classList.add('print-single-scene', 'is-printing-script');
@@ -4508,6 +4502,7 @@ function renderScriptToolbar() {
       });
       setTimeout(() => {
         window.print();
+        restoreScriptScrollAfterPrint();
       }, 70);
     }
 
