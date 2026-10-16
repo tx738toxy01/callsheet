@@ -186,6 +186,15 @@
         padding: 0 !important;
         background-color: #ffffff !important;
         color: #000000 !important;
+        height: auto !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+      }
+      #scriptPrintMount .script-block-container {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        max-height: 275mm;
+        overflow: hidden;
       }
       #scriptPrintMount p,
       #scriptPrintMount .script-editable-content {
