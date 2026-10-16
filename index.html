@@ -3272,10 +3272,8 @@ let scriptFontSize = 16;
 
       updateScriptToolbarVisibilityUI();
     }
-      const wrap = document.getElementById('scriptToolbarWrap');
-      if (!wrap) return;
 
-      const tools = [
+    function setScriptToolMode(mode) {
         {
           id: 'READ',
           label: 'Posun',
@@ -4633,8 +4631,6 @@ let scriptFontSize = 16;
         closeModal();
       }
     }
-
-    function prepareCanvasesForPrint() {
 
     function prepareCanvasesForPrint() {
       document.querySelectorAll('.script-draw-canvas').forEach(cv => {
