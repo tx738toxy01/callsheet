@@ -161,7 +161,11 @@
     @media print {
       @page {
         margin: 0 !important;
+        padding: 0 !important;
         size: A4 portrait;
+      }
+      *, *:before, *:after {
+        box-shadow: none !important;
       }
       html, body, body.script-reader-locked {
         background-color: #ffffff !important;
@@ -175,6 +179,20 @@
         padding: 0 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+      }
+      #scriptPrintMount {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 12mm 10mm !important;
+        box-sizing: border-box !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
       }
       header, main, #modalOverlay, input[type="file"], .no-print, [id^="sticky-del-"] {
         display: none !important;
