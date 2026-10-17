@@ -5125,7 +5125,7 @@ function cloneBlockForPrint(blockEl) {
 
     const A4_HEIGHT_PX = 1123;
     const A4_WIDTH_PX = 794;
-    const PADDING_PX = 38; // Zodpovedá cca 10mm z každej strany
+    const PADDING_PX = 38;
     const USABLE_H = A4_HEIGHT_PX - (PADDING_PX * 2);
 
     let pdfPreviewFontSize = 16;
@@ -5166,12 +5166,10 @@ function cloneBlockForPrint(blockEl) {
         <div id="pdfPreviewScroll" class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 flex flex-col items-center">
           <div id="pdfPreviewViewportScaler" class="origin-top transition-transform duration-150 flex flex-col items-center">
             <div id="pdfPreviewPaper" class="flex flex-col items-center pb-12" style="font-family: 'Courier New', Courier, monospace; color: black;">
-              <!-- Tu sa budú generovať fyzické A4 strany -->
             </div>
           </div>
         </div>
-        <!-- Skrytý buffer na meranie obsahu pred rezaním na strany -->
-        <div id="pdfMeasureBuffer" class="absolute opacity-0 pointer-events-none" style="top:-9999px; left:0; width: ${A4_WIDTH_PX - (PADDING_PX * 2)}px; font-family: 'Courier New', Courier, monospace;"></div>
+        <div id="pdfMeasureBuffer" class="fixed opacity-0 pointer-events-none" style="top:0; left:-9999px; width: ${A4_WIDTH_PX - (PADDING_PX * 2)}px; font-family: 'Courier New', Courier, monospace;"></div>
       `;
       document.body.appendChild(ov);
       window.addEventListener('resize', updatePdfViewportResponsiveness);
@@ -5183,20 +5181,21 @@ function cloneBlockForPrint(blockEl) {
       if (!ov || ov.classList.contains('hidden')) return;
       const scrollEl = document.getElementById('pdfPreviewScroll');
       const scaler = document.getElementById('pdfPreviewViewportScaler');
-      if (!scrollEl || !scaler) return;
+      const paperWrap = document.getElementById('pdfPreviewPaper');
+      if (!scrollEl || !scaler || !paperWrap) return;
 
       const availW = scrollEl.clientWidth - 24;
       const scale = Math.min(1, availW / A4_WIDTH_PX);
       scaler.style.transform = `scale(${scale})`;
+      scaler.style.height = `${paperWrap.offsetHeight * scale + 40}px`;
     }
 
-    // Funkcia, ktorá zmeria všetok obsah v jednej "dlhej" roli a rozseká ho do fyzických A4 divov
     function paginateContentIntoA4Pages() {
       const paperWrap = document.getElementById('pdfPreviewPaper');
       const buffer = document.getElementById('pdfMeasureBuffer');
       const badge = document.getElementById('pdfPreviewPageBadge');
       const label = document.getElementById('pdfPreviewScaleLabel');
-      
+
       if (!paperWrap || !buffer) return;
 
       buffer.style.fontSize = `${pdfPreviewFontSize}px`;
@@ -5214,31 +5213,72 @@ function cloneBlockForPrint(blockEl) {
         buffer.appendChild(cloned);
       });
 
-      // Zmeranie odstupu medzi odsekmi (podobne ako v tvojom kóde)
       const gapPx = Math.max(4, Math.round((pdfPreviewFontSize / 16) * 14));
       buffer.querySelectorAll('.script-editable-content').forEach(el => {
-        el.style.rowGap = `${gapPx}px`;
+        el.style.marginTop = '0px';
+        const pList = el.querySelectorAll('p');
+        pList.forEach((p, idx) => {
+          if (idx > 0 && !p.style.marginTop) {
+            p.style.marginTop = `${gapPx}px`;
+          }
+        });
       });
+
+      const totalH = buffer.scrollHeight || buffer.offsetHeight || 1;
+      const bufferRect = buffer.getBoundingClientRect();
+      const paragraphs = Array.from(buffer.querySelectorAll('p'));
+
+      const slices = [];
+      let curStart = 0;
+
+      while (curStart < totalH - 4) {
+        let nextEnd = curStart + USABLE_H;
+        if (nextEnd >= totalH - 4) {
+          slices.push({ startY: curStart, height: Math.min(USABLE_H, totalH - curStart) });
+          break;
+        }
+
+        let adjustedEnd = nextEnd;
+        for (let i = 0; i < paragraphs.length; i++) {
+          const r = paragraphs[i].getBoundingClientRect();
+          const pTop = r.top - bufferRect.top;
+          const pBottom = r.bottom - bufferRect.top;
+          if (pTop > curStart + 40 && pTop < nextEnd && pBottom > nextEnd) {
+            adjustedEnd = Math.floor(pTop);
+            break;
+          }
+        }
+
+        const sliceH = Math.max(100, adjustedEnd - curStart);
+        slices.push({ startY: curStart, height: sliceH });
+        curStart += sliceH;
+      }
+
+      if (slices.length === 0) {
+        slices.push({ startY: 0, height: USABLE_H });
+      }
 
       paperWrap.innerHTML = '';
-      let currentPage = createA4PageDiv();
-      let currentHeight = 0;
-      paperWrap.appendChild(currentPage);
+      slices.forEach(slice => {
+        const page = createA4PageDiv();
+        const viewport = document.createElement('div');
+        viewport.style.position = 'relative';
+        viewport.style.width = '100%';
+        viewport.style.height = `${slice.height}px`;
+        viewport.style.overflow = 'hidden';
 
-      const contentDivs = Array.from(buffer.children);
+        const shifted = document.createElement('div');
+        shifted.style.position = 'relative';
+        shifted.style.width = '100%';
+        shifted.style.transform = `translateY(-${slice.startY}px)`;
+        shifted.innerHTML = buffer.innerHTML;
 
-      contentDivs.forEach(div => {
-        const h = div.offsetHeight;
-        if (currentHeight + h > USABLE_H && currentHeight > 0) {
-          currentPage = createA4PageDiv();
-          paperWrap.appendChild(currentPage);
-          currentHeight = 0;
-        }
-        currentPage.appendChild(div.cloneNode(true));
-        currentHeight += h;
+        viewport.appendChild(shifted);
+        page.appendChild(viewport);
+        paperWrap.appendChild(page);
       });
 
-      const pageCount = paperWrap.children.length;
+      const pageCount = slices.length;
       if (badge) {
         badge.textContent = pageCount === 1 ? '1 strana A4' : (pageCount >= 2 && pageCount <= 4 ? `${pageCount} strany A4` : `${pageCount} strán A4`);
       }
@@ -5255,7 +5295,7 @@ function cloneBlockForPrint(blockEl) {
     }
 
     function adjustPdfPreviewSize(delta) {
-      pdfPreviewFontSize = Math.min(22, Math.max(11, pdfPreviewFontSize + delta));
+      pdfPreviewFontSize = Math.min(22, Math.max(9, pdfPreviewFontSize + delta));
       paginateContentIntoA4Pages();
     }
 
@@ -5272,11 +5312,11 @@ function cloneBlockForPrint(blockEl) {
       originalPrintBlocks = blocks;
       pdfPreviewTitle = (titleText || 'Scenar').replace(/[^a-zA-Z0-9_\-\u00C0-\u017F]/g, '_');
       pdfPreviewFontSize = scriptFontSize || 16;
-      
+
       const ov = ensurePdfPreviewModalExists();
       ov.classList.remove('hidden');
       ov.classList.add('flex');
-      
+
       setTimeout(() => {
         paginateContentIntoA4Pages();
       }, 50);
@@ -5296,9 +5336,97 @@ function cloneBlockForPrint(blockEl) {
       await openPdfPrintPreview([targetBlock], `Obraz_${scCode.replace('/', '-')}`);
     }
 
+    function ensureHtml2CanvasReady() {
+      if (typeof window.html2canvas === 'function') return Promise.resolve(window.html2canvas);
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload = () => resolve(window.html2canvas);
+        s.onerror = () => reject(new Error('Nepodarilo sa načítať grafický modul html2canvas.'));
+        document.head.appendChild(s);
+      });
+    }
+
+    function dataUrlToUint8Array(dataUrl) {
+      const base64 = dataUrl.split(',')[1];
+      const bin = atob(base64);
+      const len = bin.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = bin.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    function buildPdfBlobFromJpegPages(pagesData) {
+      const enc = new TextEncoder();
+      const chunks = [];
+      let offset = 0;
+      const offsets = [];
+
+      const pushStr = (str) => {
+        const b = enc.encode(str);
+        chunks.push(b);
+        offset += b.length;
+      };
+
+      const pushBytes = (b) => {
+        chunks.push(b);
+        offset += b.length;
+      };
+
+      pushStr('%PDF-1.4\n%\xFF\xFF\xFF\xFF\n');
+
+      const numPages = pagesData.length;
+      const pageObjIds = [];
+      for (let i = 0; i < numPages; i++) {
+        pageObjIds.push(3 + i * 3);
+      }
+
+      offsets[1] = offset;
+      pushStr('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+
+      offsets[2] = offset;
+      pushStr(`2 0 obj\n<< /Type /Pages /Kids [${pageObjIds.map(id => `${id} 0 R`).join(' ')}] /Count ${numPages} >>\nendobj\n`);
+
+      const pageW = 595.28;
+      const pageH = 841.89;
+
+      for (let i = 0; i < numPages; i++) {
+        const p = pagesData[i];
+        const pageObjId = 3 + i * 3;
+        const contentObjId = 4 + i * 3;
+        const imgObjId = 5 + i * 3;
+
+        offsets[pageObjId] = offset;
+        pushStr(`${pageObjId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /XObject << /Im0 ${imgObjId} 0 R >> >> /Contents ${contentObjId} 0 R >>\nendobj\n`);
+
+        const contentStream = `q\n${pageW} 0 0 ${pageH} 0 0 cm\n/Im0 Do\nQ\n`;
+        offsets[contentObjId] = offset;
+        pushStr(`${contentObjId} 0 obj\n<< /Length ${contentStream.length} >>\nstream\n${contentStream}endstream\nendobj\n`);
+
+        offsets[imgObjId] = offset;
+        pushStr(`${imgObjId} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${p.width} /Height ${p.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${p.bytes.length} >>\nstream\n`);
+        pushBytes(p.bytes);
+        pushStr('\nendstream\nendobj\n');
+      }
+
+      const totalObjs = 2 + numPages * 3;
+      const xrefOffset = offset;
+      pushStr(`xref\n0 ${totalObjs + 1}\n0000000000 65535 f \n`);
+      for (let id = 1; id <= totalObjs; id++) {
+        const offStr = String(offsets[id]).padStart(10, '0');
+        pushStr(`${offStr} 00000 n \n`);
+      }
+
+      pushStr(`trailer\n<< /Size ${totalObjs + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`);
+      return new Blob(chunks, { type: 'application/pdf' });
+    }
+
     async function generateAndPrintCleanPdf() {
       const btn = document.getElementById('pdfGenerateActionBtn');
       const paperWrap = document.getElementById('pdfPreviewPaper');
+      const scaler = document.getElementById('pdfPreviewViewportScaler');
       if (!paperWrap || !btn) return;
 
       const pages = Array.from(paperWrap.querySelectorAll('.a4-pdf-page'));
@@ -5308,27 +5436,37 @@ function cloneBlockForPrint(blockEl) {
       btn.disabled = true;
       btn.innerHTML = `<span>Generujem PDF...</span>`;
 
+      const prevTransform = scaler ? scaler.style.transform : '';
+      if (scaler) scaler.style.transform = 'none';
+
       try {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfW = 210;
-        const pdfH = 297;
+        const html2canvasFn = await ensureHtml2CanvasReady();
+        const pagesData = [];
 
         for (let i = 0; i < pages.length; i++) {
           const pageEl = pages[i];
-          const canvas = await window.html2canvas(pageEl, {
+          const prevShadow = pageEl.style.boxShadow;
+          pageEl.style.boxShadow = 'none';
+
+          const canvas = await html2canvasFn(pageEl, {
             scale: 2,
             useCORS: true,
             backgroundColor: '#ffffff',
             logging: false
           });
 
+          pageEl.style.boxShadow = prevShadow;
           const imgData = canvas.toDataURL('image/jpeg', 0.95);
-          if (i > 0) pdf.addPage();
-          pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+          pagesData.push({
+            bytes: dataUrlToUint8Array(imgData),
+            width: canvas.width,
+            height: canvas.height
+          });
         }
 
-        const pdfBlob = pdf.output('blob');
+        if (scaler) scaler.style.transform = prevTransform;
+
+        const pdfBlob = buildPdfBlobFromJpegPages(pagesData);
         const fileName = `${pdfPreviewTitle}.pdf`;
         const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
@@ -5342,6 +5480,7 @@ function cloneBlockForPrint(blockEl) {
           window.open(blobUrl, '_blank');
         }
       } catch (err) {
+        if (scaler) scaler.style.transform = prevTransform;
         if (err && err.name !== 'AbortError') {
           alert('Chyba pri vytváraní PDF: ' + err.message);
         }
