@@ -14,6 +14,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <!-- Knižnica PDF.js na extrakciu textu z PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script>
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
   </script>
@@ -95,7 +96,6 @@
     }
     .dropdown-animate { animation: dropdownIn 0.14s ease-out forwards; }
 
-    /* Pre modálne okno (prispôsobuje sa režimu) */
     .script-done-cross {
       position: relative;
     }
@@ -115,7 +115,6 @@
       background: linear-gradient(to bottom right, transparent calc(50% - 3px), rgba(255, 255, 255, 0.85) calc(50% - 3px), rgba(255, 255, 255, 0.85) calc(50% + 3px), transparent calc(50% + 3px));
     }
 
-    /* Vždy striktne čierne pre Full Screen scenár (keďže papier je vždy svetlý) */
     .script-done-cross-always-black {
       position: relative;
     }
@@ -156,6 +155,43 @@
 
     .print-canvas-mirror {
       display: none !important;
+    }
+
+    #pdfPreviewPaper .no-print,
+    #pdfPreviewPaper [id^="sticky-del-"],
+    #pdfPreviewPaper .script-draw-canvas {
+      display: none !important;
+    }
+    #pdfPreviewPaper .print-canvas-mirror {
+      display: block !important;
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      z-index: 20 !important;
+    }
+    #pdfPreviewPaper,
+    #pdfPreviewPaper p,
+    #pdfPreviewPaper .script-editable-content {
+      color: #000000 !important;
+      -webkit-text-fill-color: #000000 !important;
+    }
+    #pdfPreviewPaper p.font-extrabold,
+    #pdfPreviewPaper strong,
+    #pdfPreviewPaper b,
+    #pdfPreviewPaper strong * {
+      font-weight: 900 !important;
+    }
+    .a4-pdf-page {
+      width: 794px;
+      height: 1123px;
+      box-sizing: border-box;
+      padding: 10mm;
+      background: white;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
     @media print {
@@ -5053,12 +5089,11 @@ function renderScriptToolbar() {
       });
     }
 
-    function cloneBlockForPrint(blockEl) {
+function cloneBlockForPrint(blockEl) {
       const clone = blockEl.cloneNode(true);
       clone.removeAttribute('id');
       clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
 
-      // Nájde riadok s hlavičkou obrazu v klone a natvrdo mu vnúti <strong> a váhu písma 900
       clone.querySelectorAll('p').forEach(p => {
         const txt = p.textContent.trim();
         if (/^\d+\/\d+\s+(EXT\.|INT\.)/i.test(txt)) {
@@ -5073,61 +5108,246 @@ function renderScriptToolbar() {
       const origTas = blockEl.querySelectorAll('textarea');
       const cloneTas = clone.querySelectorAll('textarea');
       origTas.forEach((ta, idx) => {
-        if (cloneTas[idx]) {
-          cloneTas[idx].value = ta.value;
-          cloneTas[idx].textContent = ta.value;
+        const cTa = cloneTas[idx];
+        if (cTa) {
+          const div = document.createElement('div');
+          div.className = cTa.className;
+          div.style.cssText = cTa.style.cssText;
+          div.style.whiteSpace = 'pre-wrap';
+          div.style.wordBreak = 'break-word';
+          div.textContent = ta.value;
+          cTa.replaceWith(div);
         }
       });
       return clone;
     }
 
-    function restoreScrollPositionAfterPrint() {
-      if (savedPrintScrollTop !== null) {
-        const scrollEl = document.getElementById('scriptReaderScroll');
-        if (scrollEl) scrollEl.scrollTop = savedPrintScrollTop;
+    const A4_HEIGHT_PX = 1123;
+    const A4_WIDTH_PX = 794;
+    const PADDING_PX = 38; // Zodpovedá cca 10mm z každej strany
+    const USABLE_H = A4_HEIGHT_PX - (PADDING_PX * 2);
+
+    let pdfPreviewFontSize = 16;
+    let pdfPreviewTitle = 'Scenar';
+    let originalPrintBlocks = [];
+
+    function ensurePdfPreviewModalExists() {
+      let ov = document.getElementById('pdfPreviewOverlay');
+      if (ov) return ov;
+
+      ov = document.createElement('div');
+      ov.id = 'pdfPreviewOverlay';
+      ov.className = 'fixed inset-0 z-[80] bg-zinc-950/95 hidden flex-col select-none';
+      ov.innerHTML = `
+        <div class="bg-zinc-900 border-b border-zinc-800 px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 text-zinc-100 shrink-0" style="padding-top: calc(10px + env(safe-area-inset-top, 0px));">
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="closePdfPreview()" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              <span>Zrušiť</span>
+            </button>
+            <div id="pdfPreviewPageBadge" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-extrabold">
+              Náhľad
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button type="button" onclick="adjustPdfPreviewSize(-1)" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-extrabold transition cursor-pointer" title="Zmenšiť text">A-</button>
+            <span id="pdfPreviewScaleLabel" class="text-xs font-bold text-zinc-400 min-w-[44px] text-center">16px</span>
+            <button type="button" onclick="adjustPdfPreviewSize(1)" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-extrabold transition cursor-pointer" title="Zväčšiť text">A+</button>
+
+            <button id="pdfGenerateActionBtn" type="button" onclick="generateAndPrintCleanPdf()" class="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs sm:text-sm font-extrabold flex items-center gap-1.5 shadow-md transition cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              <span>Tlačiť (Vytvoriť PDF)</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="pdfPreviewScroll" class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 flex flex-col items-center">
+          <div id="pdfPreviewViewportScaler" class="origin-top transition-transform duration-150 flex flex-col items-center">
+            <div id="pdfPreviewPaper" class="flex flex-col items-center pb-12" style="font-family: 'Courier New', Courier, monospace; color: black;">
+              <!-- Tu sa budú generovať fyzické A4 strany -->
+            </div>
+          </div>
+        </div>
+        <!-- Skrytý buffer na meranie obsahu pred rezaním na strany -->
+        <div id="pdfMeasureBuffer" class="absolute opacity-0 pointer-events-none" style="top:-9999px; left:0; width: ${A4_WIDTH_PX - (PADDING_PX * 2)}px; font-family: 'Courier New', Courier, monospace;"></div>
+      `;
+      document.body.appendChild(ov);
+      window.addEventListener('resize', updatePdfViewportResponsiveness);
+      return ov;
+    }
+
+    function updatePdfViewportResponsiveness() {
+      const ov = document.getElementById('pdfPreviewOverlay');
+      if (!ov || ov.classList.contains('hidden')) return;
+      const scrollEl = document.getElementById('pdfPreviewScroll');
+      const scaler = document.getElementById('pdfPreviewViewportScaler');
+      if (!scrollEl || !scaler) return;
+
+      const availW = scrollEl.clientWidth - 24;
+      const scale = Math.min(1, availW / A4_WIDTH_PX);
+      scaler.style.transform = `scale(${scale})`;
+    }
+
+    // Funkcia, ktorá zmeria všetok obsah v jednej "dlhej" roli a rozseká ho do fyzických A4 divov
+    function paginateContentIntoA4Pages() {
+      const paperWrap = document.getElementById('pdfPreviewPaper');
+      const buffer = document.getElementById('pdfMeasureBuffer');
+      const badge = document.getElementById('pdfPreviewPageBadge');
+      const label = document.getElementById('pdfPreviewScaleLabel');
+      
+      if (!paperWrap || !buffer) return;
+
+      buffer.style.fontSize = `${pdfPreviewFontSize}px`;
+      buffer.style.lineHeight = pdfPreviewFontSize < 14 ? '1.38' : '1.52';
+      if (label) label.textContent = `${pdfPreviewFontSize}px`;
+
+      buffer.innerHTML = '';
+      originalPrintBlocks.forEach(block => {
+        const cloned = cloneBlockForPrint(block);
+        const annot = cloned.querySelector('.script-annot-area');
+        if (annot) {
+          annot.classList.remove('py-6', 'sm:py-10', 'px-5', 'sm:px-14');
+          annot.style.padding = '8px 4px';
+        }
+        buffer.appendChild(cloned);
+      });
+
+      // Zmeranie odstupu medzi odsekmi (podobne ako v tvojom kóde)
+      const gapPx = Math.max(4, Math.round((pdfPreviewFontSize / 16) * 14));
+      buffer.querySelectorAll('.script-editable-content').forEach(el => {
+        el.style.rowGap = `${gapPx}px`;
+      });
+
+      paperWrap.innerHTML = '';
+      let currentPage = createA4PageDiv();
+      let currentHeight = 0;
+      paperWrap.appendChild(currentPage);
+
+      const contentDivs = Array.from(buffer.children);
+
+      contentDivs.forEach(div => {
+        const h = div.offsetHeight;
+        if (currentHeight + h > USABLE_H && currentHeight > 0) {
+          currentPage = createA4PageDiv();
+          paperWrap.appendChild(currentPage);
+          currentHeight = 0;
+        }
+        currentPage.appendChild(div.cloneNode(true));
+        currentHeight += h;
+      });
+
+      const pageCount = paperWrap.children.length;
+      if (badge) {
+        badge.textContent = pageCount === 1 ? '1 strana A4' : (pageCount >= 2 && pageCount <= 4 ? `${pageCount} strany A4` : `${pageCount} strán A4`);
+      }
+
+      updatePdfViewportResponsiveness();
+    }
+
+    function createA4PageDiv() {
+      const page = document.createElement('div');
+      page.className = 'a4-pdf-page';
+      page.style.fontSize = `${pdfPreviewFontSize}px`;
+      page.style.lineHeight = pdfPreviewFontSize < 14 ? '1.38' : '1.52';
+      return page;
+    }
+
+    function adjustPdfPreviewSize(delta) {
+      pdfPreviewFontSize = Math.min(22, Math.max(11, pdfPreviewFontSize + delta));
+      paginateContentIntoA4Pages();
+    }
+
+    function closePdfPreview() {
+      const ov = document.getElementById('pdfPreviewOverlay');
+      if (ov) {
+        ov.classList.add('hidden');
+        ov.classList.remove('flex');
       }
     }
 
-    window.addEventListener('afterprint', restoreScrollPositionAfterPrint);
-
-    async function printFullScript() {
-      const scrollEl = document.getElementById('scriptReaderScroll');
-      if (scrollEl) savedPrintScrollTop = scrollEl.scrollTop;
-
-      const blocks = Array.from(document.querySelectorAll('#scriptPaperContainer .script-block-container'));
+    async function openPdfPrintPreview(blocks, titleText) {
       await Promise.all(blocks.map(b => syncCanvasMirrorOnBlock(b)));
-
-      const mount = getOrCreateScriptPrintMount();
-      mount.innerHTML = '';
-      blocks.forEach(block => {
-        mount.appendChild(cloneBlockForPrint(block));
-      });
-
-      // Krátka pauza na vykreslenie DOM pred otvorením dialógu tlače
+      originalPrintBlocks = blocks;
+      pdfPreviewTitle = (titleText || 'Scenar').replace(/[^a-zA-Z0-9_\-\u00C0-\u017F]/g, '_');
+      pdfPreviewFontSize = scriptFontSize || 16;
+      
+      const ov = ensurePdfPreviewModalExists();
+      ov.classList.remove('hidden');
+      ov.classList.add('flex');
+      
       setTimeout(() => {
-        window.print();
-        restoreScrollPositionAfterPrint();
+        paginateContentIntoA4Pages();
       }, 50);
     }
 
-    async function printSingleScene(itemId) {
-      const scrollEl = document.getElementById('scriptReaderScroll');
-      if (scrollEl) savedPrintScrollTop = scrollEl.scrollTop;
+    async function printFullScript() {
+      const project = getCurrentProject();
+      const blocks = Array.from(document.querySelectorAll('#scriptPaperContainer .script-block-container'));
+      if (blocks.length === 0) return;
+      await openPdfPrintPreview(blocks, project?.name || 'Cely_scenar');
+    }
 
+    async function printSingleScene(itemId) {
       const targetBlock = document.querySelector(`#scriptPaperContainer .script-block-container[data-item-id="${itemId}"]`);
       if (!targetBlock) return;
+      const scCode = targetBlock.getAttribute('data-scene-code') || 'Obraz';
+      await openPdfPrintPreview([targetBlock], `Obraz_${scCode.replace('/', '-')}`);
+    }
 
-      await syncCanvasMirrorOnBlock(targetBlock);
+    async function generateAndPrintCleanPdf() {
+      const btn = document.getElementById('pdfGenerateActionBtn');
+      const paperWrap = document.getElementById('pdfPreviewPaper');
+      if (!paperWrap || !btn) return;
 
-      const mount = getOrCreateScriptPrintMount();
-      mount.innerHTML = '';
-      mount.appendChild(cloneBlockForPrint(targetBlock));
+      const pages = Array.from(paperWrap.querySelectorAll('.a4-pdf-page'));
+      if (pages.length === 0) return;
 
-      // Krátka pauza na vykreslenie DOM pred otvorením dialógu tlače
-      setTimeout(() => {
-        window.print();
-        restoreScrollPositionAfterPrint();
-      }, 50);
+      const origBtnHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<span>Generujem PDF...</span>`;
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfW = 210;
+        const pdfH = 297;
+
+        for (let i = 0; i < pages.length; i++) {
+          const pageEl = pages[i];
+          const canvas = await window.html2canvas(pageEl, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false
+          });
+
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          if (i > 0) pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+        }
+
+        const pdfBlob = pdf.output('blob');
+        const fileName = `${pdfPreviewTitle}.pdf`;
+        const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+        if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+          await navigator.share({
+            files: [pdfFile],
+            title: fileName
+          });
+        } else {
+          const blobUrl = URL.createObjectURL(pdfBlob);
+          window.open(blobUrl, '_blank');
+        }
+      } catch (err) {
+        if (err && err.name !== 'AbortError') {
+          alert('Chyba pri vytváraní PDF: ' + err.message);
+        }
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origBtnHtml;
+      }
     }
 
     window.addEventListener('keydown', (e) => {
