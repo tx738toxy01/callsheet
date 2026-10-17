@@ -5294,12 +5294,40 @@ function cloneBlockForPrint(blockEl) {
       return page;
     }
 
+    let cachedReadyPdfFile = null;
+    let cachedReadyPdfBlob = null;
+
+    function resetCachedPdf() {
+      cachedReadyPdfFile = null;
+      cachedReadyPdfBlob = null;
+      const btn = document.getElementById('pdfGenerateActionBtn');
+      if (btn) {
+        btn.innerHTML = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          <span>Tlačiť (Vytvoriť PDF)</span>
+        `;
+      }
+    }
+
+    function triggerDirectPdfDownload(blob, fileName) {
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    }
+
     function adjustPdfPreviewSize(delta) {
+      resetCachedPdf();
       pdfPreviewFontSize = Math.min(22, Math.max(9, pdfPreviewFontSize + delta));
       paginateContentIntoA4Pages();
     }
 
     function closePdfPreview() {
+      resetCachedPdf();
       const ov = document.getElementById('pdfPreviewOverlay');
       if (ov) {
         ov.classList.add('hidden');
@@ -5308,6 +5336,7 @@ function cloneBlockForPrint(blockEl) {
     }
 
     async function openPdfPrintPreview(blocks, titleText) {
+      resetCachedPdf();
       await Promise.all(blocks.map(b => syncCanvasMirrorOnBlock(b)));
       originalPrintBlocks = blocks;
       pdfPreviewTitle = (titleText || 'Scenar').replace(/[^a-zA-Z0-9_\-\u00C0-\u017F]/g, '_');
@@ -5429,6 +5458,22 @@ function cloneBlockForPrint(blockEl) {
       const scaler = document.getElementById('pdfPreviewViewportScaler');
       if (!paperWrap || !btn) return;
 
+      if (cachedReadyPdfFile && navigator.canShare && navigator.canShare({ files: [cachedReadyPdfFile] })) {
+        try {
+          await navigator.share({
+            files: [cachedReadyPdfFile],
+            title: cachedReadyPdfFile.name
+          });
+          return;
+        } catch (shareErr) {
+          if (shareErr && shareErr.name === 'AbortError') return;
+          if (cachedReadyPdfBlob) {
+            triggerDirectPdfDownload(cachedReadyPdfBlob, cachedReadyPdfFile.name);
+          }
+          return;
+        }
+      }
+
       const pages = Array.from(paperWrap.querySelectorAll('.a4-pdf-page'));
       if (pages.length === 0) return;
 
@@ -5470,14 +5515,21 @@ function cloneBlockForPrint(blockEl) {
         const fileName = `${pdfPreviewTitle}.pdf`;
         const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
+        cachedReadyPdfBlob = pdfBlob;
+        cachedReadyPdfFile = pdfFile;
+
         if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-          await navigator.share({
-            files: [pdfFile],
-            title: fileName
-          });
+          try {
+            await navigator.share({
+              files: [pdfFile],
+              title: fileName
+            });
+          } catch (shareErr) {
+            if (shareErr && shareErr.name === 'AbortError') return;
+            triggerDirectPdfDownload(pdfBlob, fileName);
+          }
         } else {
-          const blobUrl = URL.createObjectURL(pdfBlob);
-          window.open(blobUrl, '_blank');
+          triggerDirectPdfDownload(pdfBlob, fileName);
         }
       } catch (err) {
         if (scaler) scaler.style.transform = prevTransform;
@@ -5486,7 +5538,14 @@ function cloneBlockForPrint(blockEl) {
         }
       } finally {
         btn.disabled = false;
-        btn.innerHTML = origBtnHtml;
+        if (cachedReadyPdfFile) {
+          btn.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            <span>Zdieľať / Tlačiť PDF</span>
+          `;
+        } else {
+          btn.innerHTML = origBtnHtml;
+        }
       }
     }
 
