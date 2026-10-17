@@ -154,6 +154,10 @@
       display: none;
     }
 
+    .print-canvas-mirror {
+      display: none !important;
+    }
+
     @media print {
       @page {
         margin: 10mm;
@@ -194,19 +198,28 @@
         background-color: #ffffff !important;
         color: #000000 !important;
         height: auto !important;
-        max-height: 100vh !important;
-        overflow: hidden !important;
+        max-height: none !important;
+        overflow: visible !important;
       }
       #scriptPrintMount .script-block-container {
-        page-break-inside: avoid;
-        break-inside: avoid;
-        max-height: 275mm;
-        overflow: hidden;
+        page-break-inside: auto;
+        break-inside: auto;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
       }
       #scriptPrintMount p,
       #scriptPrintMount .script-editable-content {
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
+      }
+      #scriptPrintMount p.font-extrabold,
+      #scriptPrintMount strong,
+      #scriptPrintMount b {
+        font-weight: 900 !important;
+      }
+      #scriptPrintMount strong * {
+        font-weight: 900 !important;
       }
       #scriptPrintMount .script-draw-canvas {
         display: none !important;
@@ -237,7 +250,7 @@
 <body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-zinc-950">
 
   <!-- Hidden File Inputs -->
-  <input type="file" id="csvFileInput" accept=".csv, .docx, application/vnd.openxmlformats-officedocument.wordprocessingml.document, .pdf, application/pdf" class="hidden" onchange="handleFileUpload(event)" />
+  <input type="file" id="csvFileInput" accept="*/*" class="hidden" onchange="handleFileUpload(event)" />
   <input type="file" id="backupRestoreInput" accept=".json" class="hidden" onchange="handleFallbackBackupSelected(event)" />
 
   <!-- STICKY HEADER -->
@@ -424,7 +437,7 @@
 
         <!-- Dual Progress Indicators -->
         <div class="flex items-center gap-1.5 shrink-0">
-          <button onclick="navigateTab('SCENES')" class="flex-1 sm:flex-initial flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/70 dark:border-zinc-800 transition text-left" title="Priebeh nakrúcania • Kliknite pre zoznam obrazov a označenie hotových">
+          <button onclick="navigateTab('SCENES')" class="flex-1 sm:flex-initial flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/70 dark:border-zinc-800 transition text-left" title="Natočené obrazy">
             <div class="flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full bg-amber-500"></span>
               <span class="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Obrazy:</span>
@@ -435,7 +448,7 @@
             </div>
           </button>
 
-          <button onclick="navigateTab('PROPS')" class="flex-1 sm:flex-initial flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/70 dark:border-zinc-800 transition text-left" title="Pripravenosť rekvizít a zložiek • Kliknite pre správu prípravy">
+          <button onclick="navigateTab('PROPS')" class="flex-1 sm:flex-initial flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/70 dark:border-zinc-800 transition text-left" title="Vybavené položky">
             <div class="flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
               <span class="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Príprava:</span>
@@ -1552,14 +1565,14 @@
       };
 
       const tabs = [
-        { id: 'HOME', label: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`, count: null, tooltip: 'Domov • Prehľad celej epizódy' },
-        { id: 'SCENES', label: 'Obrazy', count: `${doneScenes}/${counts.SCENES}`, tooltip: `${doneScenes} z ${counts.SCENES} obrazov natočených na pľaci` },
-        { id: 'CAST', label: 'Účinkujúci', count: counts.CAST, tooltip: `${counts.CAST} účinkujúcich (moderátori, herci, odborníci, komparz)` },
-        { id: 'LOCATIONS', label: 'Lokácie', count: `${counts.MAIN_LOCS}/${counts.LOCATIONS}`, tooltip: `${counts.MAIN_LOCS} hlavné stanovištia (areály) / ${counts.LOCATIONS} konkrétnych priestorov` },
-        { id: 'GASTRO', label: 'Gastro', count: counts.GASTRO, tooltip: `${counts.GASTRO} gastro scén (varenie, pečenie, degustácie a suroviny)` },
-        { id: 'COSTUMES', label: 'Kostýmy', count: `${peopleWithCostumes.length} (${counts.COSTUMES})`, tooltip: `${peopleWithCostumes.length} účinkujúcich s kostýmom • Celkovo ${counts.COSTUMES} rôznych outfitov/prezlekov` },
-        { id: 'PROPS', label: 'Rekvizity', count: counts.PROPS, tooltip: `${counts.PROPS} rekvizít a technického vybavenia pre natáčanie` },
-        { id: 'ALERTS', label: 'Pozor', count: counts.ALERTS, alert: true, tooltip: `${counts.ALERTS} kritických upozornení v scenári (riziká, špina, oheň, overenia)` }
+        { id: 'HOME', label: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`, count: null, tooltip: 'Prehľad' },
+        { id: 'SCENES', label: 'Obrazy', count: `${doneScenes}/${counts.SCENES}`, tooltip: `Natočené: ${doneScenes} z ${counts.SCENES}` },
+        { id: 'CAST', label: 'Účinkujúci', count: counts.CAST, tooltip: `Osoby: ${counts.CAST}` },
+        { id: 'LOCATIONS', label: 'Lokácie', count: `${counts.MAIN_LOCS}/${counts.LOCATIONS}`, tooltip: `Hlavné lokácie: ${counts.MAIN_LOCS} / Priestory: ${counts.LOCATIONS}` },
+        { id: 'GASTRO', label: 'Gastro', count: counts.GASTRO, tooltip: `Gastro scény: ${counts.GASTRO}` },
+        { id: 'COSTUMES', label: 'Kostýmy', count: `${peopleWithCostumes.length} (${counts.COSTUMES})`, tooltip: `Postavy: ${peopleWithCostumes.length} | Kostýmy: ${counts.COSTUMES}` },
+        { id: 'PROPS', label: 'Rekvizity', count: counts.PROPS, tooltip: `Položky: ${counts.PROPS}` },
+        { id: 'ALERTS', label: 'Pozor', count: counts.ALERTS, alert: true, tooltip: `Upozornenia: ${counts.ALERTS}` }
       ];
 
       const isSearching = !!(appState.searchQuery || appState.searchCategoryFilter !== 'ALL');
@@ -1742,7 +1755,7 @@
             ${cards.map(c => `
               <button
                 onclick="navigateTab('${c.id}')"
-                title="Kliknite pre otvorenie sekcie: ${c.title} (${c.subtitle})"
+                title="${c.title}"
                 class="group text-left bg-gradient-to-br ${c.accent} bg-white dark:bg-zinc-900 border rounded-3xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-md flex flex-col justify-between gap-5"
               >
                 <div class="flex items-center justify-between w-full">
@@ -2525,9 +2538,17 @@
         });
       });
 
+      let sceneTitle = '';
+      if (scripts.length > 0 && scripts[0].title && scripts[0].title !== 'Scenár obrazu') {
+        sceneTitle = scripts[0].title.replace(/^\d+\/\d+\s*/, '').replace(/^[–\-•\s]+/, '').trim();
+      }
+      if (!sceneTitle && locs.length > 0) {
+        sceneTitle = locs[0].title.replace(/^Areál\s*(\([^)]*\))?\s*[:–\-]?\s*/i, '').trim();
+      }
+
       document.getElementById('modalTitleWrap').innerHTML = `
-        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">${escapeHtml(project.name)}</span>
-        <h2 class="font-extrabold text-lg sm:text-xl text-zinc-900 dark:text-white">Obraz ${escapeHtml(sceneCode)}</h2>
+        <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-amber-500 text-zinc-950 inline-block mb-1">Obraz ${escapeHtml(sceneCode)}</span>
+        <h2 class="font-extrabold text-base sm:text-lg text-zinc-900 dark:text-white leading-snug">${escapeHtml(sceneTitle || `Obraz ${sceneCode}`)}</h2>
       `;
 
       document.getElementById('modalHeaderAction').innerHTML = `
@@ -2544,7 +2565,7 @@
         if (scripts.length === 0) return '';
         const scItem = scripts[0];
         const doneClasses = scObj.done ? 'relative script-done-cross opacity-50 grayscale' : '';
-        const innerHtmlContent = scItem.customHtml || formatScriptLinesHTML(scItem.details);
+        const innerHtmlContent = scItem.customHtml || formatScriptLinesHTML(scItem.details, scItem.title);
         const stickyList = scItem.stickyNotes || [];
 
         return `
@@ -2559,7 +2580,6 @@
             <div
               id="modal-script-viewport-${escapeHtml(scItem.id)}"
               onclick="openScriptReader('${escapeHtml(sceneCode)}')"
-              title="Kliknite pre otvorenie celého scenára a kreslenie"
               class="relative overflow-hidden cursor-pointer bg-[#fdfbf7] text-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-xl shadow-inner hover:border-amber-500 transition ${doneClasses}"
             >
               <div
@@ -3757,13 +3777,33 @@ function renderScriptToolbar() {
       });
     }
 
-    function formatScriptLinesHTML(rawDetails) {
+    function formatScriptLinesHTML(rawDetails, synopsisTitle = '') {
       const lines = String(rawDetails || '').split(/\s*\|\|\s*/);
-      return lines.map(line => {
+      const cleanSynopsis = (synopsisTitle || '').replace(/^\d+\/\d+\s*/, '').replace(/^[–\-•\s]+/, '').trim().toLowerCase();
+
+      return lines.map((line, idx) => {
         let safe = escapeHtml(line)
           .replace(/&lt;b&gt;(.*?)&lt;\/b&gt;/g, '<strong>$1</strong>')
           .replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<span class="underline">$1</span>');
-        if (/^(Grafika|VO)/i.test(line.replace(/<\/?b>/g, ''))) {
+        
+        const cleanRaw = line.replace(/<\/?(?:b|strong)>/gi, '').trim();
+
+        if (/^\d+\/\d+\s+(EXT\.|INT\.)/i.test(cleanRaw)) {
+          return `<p class="font-extrabold text-zinc-950" style="font-weight: 900 !important; font-size: 1.05em !important;"><strong>${safe}</strong></p>`;
+        }
+
+        if (cleanSynopsis && cleanSynopsis !== 'scenár obrazu' && cleanRaw.toLowerCase() === cleanSynopsis) {
+          return `<p class="font-extrabold text-zinc-950" style="font-weight: 900 !important; font-size: 1.02em !important;"><strong>${safe}</strong></p>`;
+        }
+
+        if (/^\(/i.test(cleanRaw)) {
+          const prevRaw = idx > 0 ? lines[idx - 1].replace(/<\/?(?:b|strong)>/gi, '').trim() : '';
+          const isDirectlyAfterParen = /^\(/i.test(prevRaw);
+          const tightStyle = isDirectlyAfterParen ? 'margin-top: 1px !important;' : '';
+          return `<p style="${tightStyle}">${safe}</p>`;
+        }
+
+        if (/^(Grafika|VO)/i.test(cleanRaw)) {
           return `<p class="py-1 px-2.5 rounded bg-amber-500/10 border-l-2 border-amber-500">${safe}</p>`;
         }
         return `<p>${safe}</p>`;
@@ -3925,7 +3965,7 @@ function renderScriptToolbar() {
         const scCode = (it.scenesRaw || '').trim();
         const anchorId = `script-anchor-${scCode || ('UVOD_' + idx)}`;
         const isDone = scCode ? !!project.sceneDone?.[scCode] : false;
-        const innerHtmlContent = it.customHtml || formatScriptLinesHTML(it.details);
+        const innerHtmlContent = it.customHtml || formatScriptLinesHTML(it.details, it.title);
         const stickyList = it.stickyNotes || [];
 
         return `
@@ -3946,6 +3986,14 @@ function renderScriptToolbar() {
                   </span>
                 </button>
                 <button
+                  id="clear-strokes-btn-${escapeHtml(it.id)}"
+                  onclick="event.stopPropagation(); clearSceneStrokes('${escapeHtml(it.id)}')"
+                  title="Vymazať kresby v tomto obraze"
+                  class="${(it.strokes && it.strokes.length > 0) ? 'inline-flex' : 'hidden'} no-print px-3.5 py-3 rounded-xl bg-zinc-200 hover:bg-rose-500 hover:text-white text-zinc-700 text-xs font-bold transition shrink-0 items-center justify-center shadow-xs"
+                >
+                  Vymazať kresbu
+                </button>
+                <button
                   type="button"
                   onclick="event.stopPropagation(); printSingleScene('${escapeHtml(it.id)}')"
                   title="Vytlačiť tento obraz (${escapeHtml(scCode)})"
@@ -3954,11 +4002,6 @@ function renderScriptToolbar() {
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                   <span class="hidden sm:inline">Tlač</span>
                 </button>
-                ${(it.strokes && it.strokes.length > 0) ? `
-                  <button onclick="event.stopPropagation(); clearSceneStrokes('${escapeHtml(it.id)}')" title="Vymazať kresby v tomto obraze" class="no-print px-3 py-3 rounded-xl bg-zinc-200 hover:bg-rose-500 hover:text-white text-zinc-700 text-xs font-bold transition shrink-0">
-                    Čistiť kresbu
-                  </button>
-                ` : ''}
               </div>
             ` : ''}
 
@@ -4597,6 +4640,11 @@ function renderScriptToolbar() {
 
         if (currentStroke) {
           pushScriptAction({ type: 'STROKE', itemId, stroke: currentStroke });
+          const clearBtn = document.getElementById(`clear-strokes-btn-${itemId}`);
+          if (clearBtn) {
+            clearBtn.classList.remove('hidden');
+            clearBtn.classList.add('inline-flex');
+          }
         }
         currentStroke = null;
         scheduleDrawingSaveState();
@@ -4618,6 +4666,13 @@ function renderScriptToolbar() {
         scriptRedoStack.push({ type: 'STROKE', itemId: act.itemId, stroke: popped });
         const canvas = document.getElementById(`script-canvas-${act.itemId}`);
         if (canvas) redrawCanvasStrokes(canvas, item.strokes);
+        if (!item.strokes || item.strokes.length === 0) {
+          const clearBtn = document.getElementById(`clear-strokes-btn-${act.itemId}`);
+          if (clearBtn) {
+            clearBtn.classList.add('hidden');
+            clearBtn.classList.remove('inline-flex');
+          }
+        }
       } else if (act.type === 'STICKY_ADD' && item && item.stickyNotes) {
         item.stickyNotes = item.stickyNotes.filter(s => s.id !== act.sticky.id);
         scriptRedoStack.push(act);
@@ -4728,11 +4783,13 @@ function renderScriptToolbar() {
         scriptRedoStack = scriptRedoStack.filter(a => a.itemId !== itemId);
         saveState();
         renderScriptToolbar();
-        renderScriptPaperBlocks();
-        setTimeout(() => {
-          initAllScriptCanvases();
-          applyScriptToolModeToDOM();
-        }, 20);
+        const canvas = document.getElementById(`script-canvas-${itemId}`);
+        if (canvas) redrawCanvasStrokes(canvas, []);
+        const clearBtn = document.getElementById(`clear-strokes-btn-${itemId}`);
+        if (clearBtn) {
+          clearBtn.classList.add('hidden');
+          clearBtn.classList.remove('inline-flex');
+        }
       }
     }
 
@@ -4881,32 +4938,53 @@ function renderScriptToolbar() {
     }
 
     function syncCanvasMirrorOnBlock(blockEl) {
-      if (!blockEl) return;
+      if (!blockEl) return Promise.resolve();
       const cv = blockEl.querySelector('.script-draw-canvas');
-      if (!cv || cv.width <= 0 || cv.height <= 0) return;
+      if (!cv || cv.width <= 0 || cv.height <= 0) return Promise.resolve();
       const itemId = blockEl.getAttribute('data-item-id');
       const project = getCurrentProject();
       const item = project?.items?.find(i => i.id === itemId);
       let img = cv.parentElement.querySelector('.print-canvas-mirror');
+
       if (!item || !item.strokes || item.strokes.length === 0) {
         if (img) img.remove();
-        return;
+        return Promise.resolve();
       }
-      try {
-        if (!img) {
-          img = document.createElement('img');
-          img.className = 'print-canvas-mirror pointer-events-none';
-          cv.parentElement.appendChild(img);
+
+      return new Promise((resolve) => {
+        try {
+          if (!img) {
+            img = document.createElement('img');
+            img.className = 'print-canvas-mirror pointer-events-none';
+            cv.parentElement.appendChild(img);
+          }
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          img.src = cv.toDataURL('image/png');
+          if (img.complete) resolve();
+        } catch (e) {
+          resolve();
         }
-        img.src = cv.toDataURL('image/png');
-      } catch (e) {}
+      });
     }
 
     function cloneBlockForPrint(blockEl) {
-      syncCanvasMirrorOnBlock(blockEl);
       const clone = blockEl.cloneNode(true);
       clone.removeAttribute('id');
       clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+
+      // Nájde riadok s hlavičkou obrazu v klone a natvrdo mu vnúti <strong> a váhu písma 900
+      clone.querySelectorAll('p').forEach(p => {
+        const txt = p.textContent.trim();
+        if (/^\d+\/\d+\s+(EXT\.|INT\.)/i.test(txt)) {
+          p.style.fontWeight = '900';
+          p.style.setProperty('font-weight', '900', 'important');
+          if (!p.querySelector('strong')) {
+            p.innerHTML = `<strong style="font-weight: 900 !important;">${p.innerHTML}</strong>`;
+          }
+        }
+      });
+
       const origTas = blockEl.querySelectorAll('textarea');
       const cloneTas = clone.querySelectorAll('textarea');
       origTas.forEach((ta, idx) => {
@@ -4927,33 +5005,44 @@ function renderScriptToolbar() {
 
     window.addEventListener('afterprint', restoreScrollPositionAfterPrint);
 
-    function printFullScript() {
+    async function printFullScript() {
       const scrollEl = document.getElementById('scriptReaderScroll');
       if (scrollEl) savedPrintScrollTop = scrollEl.scrollTop;
 
+      const blocks = Array.from(document.querySelectorAll('#scriptPaperContainer .script-block-container'));
+      await Promise.all(blocks.map(b => syncCanvasMirrorOnBlock(b)));
+
       const mount = getOrCreateScriptPrintMount();
       mount.innerHTML = '';
-      document.querySelectorAll('#scriptPaperContainer .script-block-container').forEach(block => {
+      blocks.forEach(block => {
         mount.appendChild(cloneBlockForPrint(block));
       });
 
-      window.print();
-      restoreScrollPositionAfterPrint();
+      // Krátka pauza na vykreslenie DOM pred otvorením dialógu tlače
+      setTimeout(() => {
+        window.print();
+        restoreScrollPositionAfterPrint();
+      }, 50);
     }
 
-    function printSingleScene(itemId) {
+    async function printSingleScene(itemId) {
       const scrollEl = document.getElementById('scriptReaderScroll');
       if (scrollEl) savedPrintScrollTop = scrollEl.scrollTop;
 
       const targetBlock = document.querySelector(`#scriptPaperContainer .script-block-container[data-item-id="${itemId}"]`);
       if (!targetBlock) return;
 
+      await syncCanvasMirrorOnBlock(targetBlock);
+
       const mount = getOrCreateScriptPrintMount();
       mount.innerHTML = '';
       mount.appendChild(cloneBlockForPrint(targetBlock));
 
-      window.print();
-      restoreScrollPositionAfterPrint();
+      // Krátka pauza na vykreslenie DOM pred otvorením dialógu tlače
+      setTimeout(() => {
+        window.print();
+        restoreScrollPositionAfterPrint();
+      }, 50);
     }
 
     window.addEventListener('keydown', (e) => {
@@ -5092,9 +5181,28 @@ function renderScriptToolbar() {
   <script>
     (function initModernTooltips() {
       const tipBox = document.getElementById('appFloatingTooltip');
+      if (!tipBox) return;
       let activeEl = null;
 
+      function hideTooltip() {
+        if (activeEl) {
+          const stored = activeEl.getAttribute('data-stored-title');
+          if (stored) {
+            activeEl.setAttribute('title', stored);
+            activeEl.removeAttribute('data-stored-title');
+          }
+          activeEl = null;
+        }
+        tipBox.classList.add('hidden');
+        tipBox.style.opacity = '0';
+      }
+
+      document.addEventListener('touchstart', hideTooltip, { passive: true });
+      document.addEventListener('scroll', hideTooltip, { passive: true });
+
       document.addEventListener('mouseover', (e) => {
+        if (window.matchMedia('(pointer: coarse)').matches) return;
+
         const target = e.target.closest('[title]');
         if (!target) return;
         activeEl = target;
@@ -5116,17 +5224,7 @@ function renderScriptToolbar() {
         tipBox.style.left = leftPos + 'px';
       });
 
-      document.addEventListener('mouseout', (e) => {
-        if (!activeEl) return;
-        const stored = activeEl.getAttribute('data-stored-title');
-        if (stored) {
-          activeEl.setAttribute('title', stored);
-          activeEl.removeAttribute('data-stored-title');
-        }
-        tipBox.classList.add('hidden');
-        tipBox.style.opacity = '0';
-        activeEl = null;
-      });
+      document.addEventListener('mouseout', hideTooltip);
     })();
   </script>
 </body>
