@@ -2190,7 +2190,7 @@
               <p class="text-sm font-bold text-zinc-500">Nenašli sa žiadne obrazy zodpovedajúce filtru.</p>
             </div>
           ` : `
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3.5">
               ${filteredScenes.map(sc => {
                 const scObj = sceneMap[sc];
                 const locs = scObj.items.filter(i => i.group === 'LOCATIONS');
@@ -2231,34 +2231,41 @@
                 return `
                   <div
                     onclick="openSceneModal('${escapeHtml(sc)}')"
-                    class="group cursor-pointer ${cardAppearance} hover:border-amber-500 rounded-3xl p-4 sm:p-5 transition flex flex-col justify-between gap-3 shadow-2xs relative overflow-hidden ${
+                    class="group cursor-pointer ${cardAppearance} hover:border-amber-500 rounded-2xl sm:rounded-3xl p-3 sm:p-5 transition flex flex-col justify-between gap-2 sm:gap-3 shadow-2xs relative overflow-hidden ${
                       isDone ? 'opacity-40 grayscale script-done-cross' : ''
                     }"
                   >
-                    <div class="space-y-2">
-                      <div class="flex items-center justify-between gap-2">
-                        <span class="text-xs sm:text-sm font-extrabold px-2.5 py-1 rounded-xl bg-amber-500 text-zinc-950">
-                          ${escapeHtml(sc)}
-                        </span>
+                    <div class="space-y-1.5 min-w-0">
+                      <div class="flex items-center justify-between gap-1.5 min-w-0">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                          <span class="text-[11px] sm:text-sm font-extrabold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl bg-amber-500 text-zinc-950 shrink-0">
+                            ${escapeHtml(sc)}
+                          </span>
+                          ${isFoodScene ? `
+                            <span class="text-[9px] sm:text-[11px] font-extrabold px-1.5 py-0.5 sm:px-2.5 rounded-md sm:rounded-lg bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/30 uppercase tracking-wider shrink-0">
+                              Gastro
+                            </span>
+                          ` : ''}
+                        </div>
 
-                        <div class="text-[11px] font-extrabold text-zinc-400 truncate text-right">
+                        <div class="text-[10px] sm:text-[11px] font-extrabold text-zinc-400 truncate text-right shrink-0">
                           ${isDone ? `<span class="text-emerald-600 dark:text-emerald-400 font-extrabold">Natočené</span>` : `<span>${escapeHtml(topMetaRight)}</span>`}
                         </div>
                       </div>
 
-                      <div class="text-xs font-bold text-amber-600 dark:text-amber-500 truncate">
+                      <div class="text-[11px] sm:text-xs font-bold text-amber-600 dark:text-amber-500 truncate" title="${escapeHtml(locName)}">
                         ${escapeHtml(locName)}
                       </div>
 
                       ${synop ? `
-                        <div class="text-sm font-extrabold text-zinc-900 dark:text-white leading-snug line-clamp-2">
+                        <div class="text-xs sm:text-sm font-extrabold text-zinc-900 dark:text-white leading-snug truncate" title="${escapeHtml(synop)}">
                           ${escapeHtml(synop)}
                         </div>
                       ` : ''}
                     </div>
 
                     ${castText ? `
-                      <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-[11px] font-medium text-zinc-400 line-clamp-1">
+                      <div class="pt-1.5 border-t border-zinc-100 dark:border-zinc-800/80 text-[10px] sm:text-[11px] font-medium text-zinc-400 truncate" title="${escapeHtml(castText)}">
                         ${escapeHtml(castText)}
                       </div>
                     ` : ''}
@@ -2487,8 +2494,15 @@
       const scObj = sceneMap[sceneCode];
       if (!scObj) return;
 
+      const gastro = scObj.items.filter(i => i.group === 'GASTRO');
+      const isFoodScene = gastro.length > 0;
+
       const modalCont = document.getElementById('modalContainer');
       if (modalCont) {
+        modalCont.classList.remove('bg-purple-50/95', 'dark:bg-[#150d1e]', 'border-purple-500/40', 'dark:border-purple-500/40');
+        if (isFoodScene) {
+          modalCont.classList.add('bg-purple-50/95', 'dark:bg-[#150d1e]', 'border-purple-500/40', 'dark:border-purple-500/40');
+        }
         if (scObj.done) {
           modalCont.classList.add('opacity-75', 'grayscale');
         } else {
@@ -2505,7 +2519,6 @@
       const scripts = scObj.items.filter(i => i.group === 'SCRIPT');
       const locs = scObj.items.filter(i => i.group === 'LOCATIONS');
       const cast = scObj.items.filter(i => i.group === 'CAST');
-      const gastro = scObj.items.filter(i => i.group === 'GASTRO');
       
       const propsAll = scObj.items.filter(i => i.group === 'PROPS');
       const standaloneCostumes = scObj.items.filter(i => i.group === 'COSTUMES');
@@ -2547,7 +2560,19 @@
       }
 
       document.getElementById('modalTitleWrap').innerHTML = `
-        <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-amber-500 text-zinc-950 inline-block mb-1">Obraz ${escapeHtml(sceneCode)}</span>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-amber-500 text-zinc-950 inline-block">Obraz ${escapeHtml(sceneCode)}</span>
+          ${isFoodScene ? `
+            <button
+              type="button"
+              onclick="closeModal(); navigateTab('GASTRO');"
+              title="Prejsť do sekcie Gastro"
+              class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-lg bg-purple-500/20 hover:bg-purple-500 hover:text-white text-purple-700 dark:text-purple-300 border border-purple-500/40 uppercase tracking-wider transition cursor-pointer active:scale-95"
+            >
+              Gastro
+            </button>
+          ` : ''}
+        </div>
         <h2 class="font-extrabold text-base sm:text-lg text-zinc-900 dark:text-white leading-snug">${escapeHtml(sceneTitle || `Obraz ${sceneCode}`)}</h2>
       `;
 
@@ -2995,6 +3020,10 @@
       if (modalStack.length === 0 || modalStack[modalStack.length - 1]?.type !== 'SCENE') {
         const headerAct = document.getElementById('modalHeaderAction');
         if (headerAct) headerAct.innerHTML = '';
+        const modalCont = document.getElementById('modalContainer');
+        if (modalCont) {
+          modalCont.classList.remove('bg-purple-50/95', 'dark:bg-[#150d1e]', 'border-purple-500/40', 'dark:border-purple-500/40');
+        }
       }
       const modalCont = document.getElementById('modalContainer');
       if (modalCont) modalCont.classList.remove('opacity-75', 'grayscale');
@@ -3958,10 +3987,45 @@ function renderScriptToolbar() {
 
     function renderScriptPaperBlocks() {
       const project = getCurrentProject();
-      const scriptItems = project.items.filter(i => i.group === 'SCRIPT');
+      const scriptItems = (project.items || []).filter(i => i.group === 'SCRIPT');
       const paper = document.getElementById('scriptPaperContainer');
+      if (!paper) return;
 
-      paper.innerHTML = scriptItems.map((it, idx) => {
+      if (scriptItems.length === 0) {
+        paper.innerHTML = `
+          <div class="text-center py-20 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800">
+            <p class="text-sm font-bold text-zinc-500">V projekte sa nenachádza žiadny scenár.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const totalScenesCount = scriptItems.length;
+
+      const titlePageHtml = `
+        <div class="script-block-container mb-8 relative bg-[#fdfbf7] text-zinc-950 border-b-2 border-zinc-300 dark:border-zinc-700 min-h-[520px] sm:min-h-[720px] flex flex-col justify-between p-8 sm:p-20 text-center font-mono">
+          <div class="space-y-3">
+            <span class="text-xs font-bold uppercase tracking-widest text-zinc-400">Literárny / Technický scenár</span>
+            <div class="w-12 h-0.5 bg-amber-500 mx-auto"></div>
+          </div>
+
+          <div class="my-auto py-12 space-y-6">
+            <h1 class="text-2xl sm:text-4xl font-extrabold uppercase tracking-tight text-zinc-950">
+              ${escapeHtml(project.name || 'Bez názvu')}
+            </h1>
+            <p class="text-xs uppercase tracking-wider text-zinc-400">
+              Výrobný zoznam a scenár obrazov
+            </p>
+          </div>
+
+          <div class="pt-8 border-t border-zinc-200/80 flex flex-wrap items-center justify-between gap-4 text-xs text-zinc-500">
+            <span>Počet obrazov: <strong>${totalScenesCount}</strong></span>
+            <span>Výrobný systém • Tlačová verzia</span>
+          </div>
+        </div>
+      `;
+
+      const blocksHtml = scriptItems.map((it, idx) => {
         const scCode = (it.scenesRaw || '').trim();
         const anchorId = `script-anchor-${scCode || ('UVOD_' + idx)}`;
         const isDone = scCode ? !!project.sceneDone?.[scCode] : false;
@@ -4029,6 +4093,8 @@ function renderScriptToolbar() {
           </div>
         `;
       }).join('');
+
+      paper.innerHTML = titlePageHtml + blocksHtml;
     }
 
     function getStickyDynamicFontSize(text) {
