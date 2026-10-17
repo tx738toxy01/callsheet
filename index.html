@@ -160,7 +160,7 @@
 
     @media print {
       @page {
-        margin: 10mm;
+        margin: 0 !important;
         size: A4 portrait;
       }
       html, body, body.script-reader-locked {
@@ -194,7 +194,8 @@
         width: 100% !important;
         max-width: 768px !important;
         margin: 0 auto !important;
-        padding: 0 !important;
+        padding: 12mm 10mm !important;
+        box-sizing: border-box !important;
         background-color: #ffffff !important;
         color: #000000 !important;
         height: auto !important;
