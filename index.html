@@ -10,6 +10,13 @@
   <link rel="manifest" href="./manifest.json" />
   <title>Produkčný Call Sheet</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Knižnica Mammoth na bleskové čítanie DOCX súborov priamo v iPade -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <!-- Knižnica PDF.js na extrakciu textu z PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  </script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -230,7 +237,7 @@
 <body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-zinc-950">
 
   <!-- Hidden File Inputs -->
-  <input type="file" id="csvFileInput" accept="*/*" class="hidden" onchange="handleFileUpload(event)" />
+  <input type="file" id="csvFileInput" accept=".csv, .docx, application/vnd.openxmlformats-officedocument.wordprocessingml.document, .pdf, application/pdf" class="hidden" onchange="handleFileUpload(event)" />
   <input type="file" id="backupRestoreInput" accept=".json" class="hidden" onchange="handleFallbackBackupSelected(event)" />
 
   <!-- STICKY HEADER -->
@@ -266,7 +273,7 @@
               </svg>
             </button>
 
-            <!-- Dropdown Menu -->
+            <!-- Dropdown Menu (Iba zoznam) -->
             <div
               id="projectDropdownMenu"
               class="hidden absolute left-0 mt-2 w-72 sm:w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden dropdown-animate"
@@ -275,35 +282,49 @@
                 <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Výrobné listy (Časti)</span>
                 <span id="projectCountBadge" class="text-[11px] font-bold text-zinc-400">3</span>
               </div>
-
               <div id="projectDropdownList" class="max-h-60 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800/50">
               </div>
+            </div>
+          </div>
 
-              <!-- Bottom Actions inside Dropdown: + Nahrať CSV & + Nová časť od základu -->
-              <div class="p-2 bg-zinc-50 dark:bg-zinc-950/70 border-t border-zinc-200/80 dark:border-zinc-800 space-y-1">
+          <!-- PLUS BUTTON DROPDOWN -->
+          <div class="relative shrink-0" id="addMenuContainer">
+            <button
+              onclick="toggleAddMenu(event)"
+              class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-zinc-100 dark:bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 dark:hover:bg-amber-500 dark:hover:text-zinc-950 border border-zinc-200/90 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl transition"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            </button>
+
+            <!-- Add Dropdown Menu -->
+            <div
+              id="addDropdownMenu"
+              class="hidden absolute left-0 sm:left-auto sm:right-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden dropdown-animate"
+            >
+              <div class="p-2 space-y-1">
                 <button
-                  onclick="triggerCSVUploadFromDropdown()"
+                  onclick="triggerUploadFromAddMenu()"
                   class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-zinc-800 dark:text-zinc-200 hover:bg-amber-500 hover:text-zinc-950 transition group"
                 >
                   <svg class="w-4 h-4 text-amber-500 group-hover:text-zinc-950 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                   </svg>
                   <div class="text-left">
-                    <div>Nahrať CSV súbor</div>
-                    <div class="text-[10px] font-normal opacity-75">Importovať hotový výrobný list</div>
+                    <div>Nahrať DOCX, PDF, CSV</div>
+                    <div class="text-[10px] font-normal opacity-75">Importovať scenár / tabuľku</div>
                   </div>
                 </button>
 
                 <button
-                  onclick="openNewEpisodeWizard()"
-                  class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-zinc-800 dark:text-zinc-200 hover:bg-amber-500 hover:text-zinc-950 transition group"
+                  onclick="openNewEpisodeWizardFromAddMenu()"
+                  class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-zinc-800 dark:text-zinc-200 hover:bg-emerald-500 hover:text-zinc-950 transition group"
                 >
                   <svg class="w-4 h-4 text-emerald-500 group-hover:text-zinc-950 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                   </svg>
                   <div class="text-left">
-                    <div>Vytvoriť novú časť od základu</div>
-                    <div class="text-[10px] font-normal opacity-75">Prázdny Call Sheet pred písaním scenára</div>
+                    <div>Vytvoriť novú časť</div>
+                    <div class="text-[10px] font-normal opacity-75">Založiť prázdny Call Sheet</div>
                   </div>
                 </button>
               </div>
@@ -403,7 +424,7 @@
 
         <!-- Dual Progress Indicators -->
         <div class="flex items-center gap-1.5 shrink-0">
-          <button onclick="navigateTab('SCENES')" class="flex-1 sm:flex-initial flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/70 dark:border-zinc-800 transition text-left" title="Natočené obrazy na pľaci">
+          <button onclick="navigateTab('SCENES')" class="flex-1 sm:flex-initial flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/70 dark:border-zinc-800 transition text-left" title="Priebeh nakrúcania • Kliknite pre zoznam obrazov a označenie hotových">
             <div class="flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full bg-amber-500"></span>
               <span class="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Obrazy:</span>
@@ -414,7 +435,7 @@
             </div>
           </button>
 
-          <button onclick="navigateTab('PROPS')" class="flex-1 sm:flex-initial flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/70 dark:border-zinc-800 transition text-left" title="Vybavené položky v príprave">
+          <button onclick="navigateTab('PROPS')" class="flex-1 sm:flex-initial flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 border border-zinc-200/70 dark:border-zinc-800 transition text-left" title="Pripravenosť rekvizít a zložiek • Kliknite pre správu prípravy">
             <div class="flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
               <span class="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Príprava:</span>
@@ -820,18 +841,15 @@
       return explicit;
     }
 
-    // Strictly parses ONLY actual worn costumes (never matches "Kostýmová výtvarníčka" or "Výklad o kroji")
     function parseStructuredCostumes(detailsText, personTitle = '') {
       if (!detailsText) return { costumes: [], extraNote: '' };
 
-      // 1. Exclude costume designer or people whose role description just mentions costumes/looms
       if (/kostýmová výtvarníčka|jarjabková|výklad o kroji/i.test(detailsText + ' ' + personTitle)) {
         return { costumes: [], extraNote: '' };
       }
 
       const costumes = [];
-      // 2. Check for explicit numbered costumes: "1) Civil vo výťahu (2/1, 26/1), 2) ..."
-      const regex = /(\d+)\)\s*([^(),.;]+?)(?:\s*\(([^)]+)\))?(?=[,.;]|\s+\d+\)|$)/g;
+      const regex = /(\d+)\)\s*(.+?)(?:\s*\(([^)]+)\))?(?=\s*[,.;]\s*\d+\)|\s*\d+\)|$)/g;
       let m;
       while ((m = regex.exec(detailsText)) !== null) {
         const num = m[1].trim();
@@ -841,8 +859,6 @@
         costumes.push({ num, name, scenesRaw, discrete });
       }
 
-      // 3. Check for unnumbered explicit costume changes with "(od ...)" e.g. in Betliar:
-      // "Romantický dámsky kostým 19. storočia (od obr. 2/11), poľovnícka pokrývka hlavy (od 19/11)"
       if (costumes.length === 0 && /\(\s*od\s+(?:obr\.\s*)?\d+/i.test(detailsText)) {
         const parts = detailsText.split(/,(?![^(]*\))/);
         let idx = 1;
@@ -1025,6 +1041,11 @@
       const pMenu = document.getElementById('projectDropdownMenu');
       if (pCont && pMenu && !pCont.contains(e.target)) {
         pMenu.classList.add('hidden');
+      }
+      const aCont = document.getElementById('addMenuContainer');
+      const aMenu = document.getElementById('addDropdownMenu');
+      if (aCont && aMenu && !aCont.contains(e.target)) {
+        aMenu.classList.add('hidden');
       }
     });
 
@@ -1328,6 +1349,15 @@
     function toggleProjectDropdown(e) {
       e.stopPropagation();
       document.getElementById('projectDropdownMenu').classList.toggle('hidden');
+      const aMenu = document.getElementById('addDropdownMenu');
+      if (aMenu) aMenu.classList.add('hidden');
+    }
+
+    function toggleAddMenu(e) {
+      e.stopPropagation();
+      document.getElementById('addDropdownMenu').classList.toggle('hidden');
+      const pMenu = document.getElementById('projectDropdownMenu');
+      if (pMenu) pMenu.classList.add('hidden');
     }
 
     function renderProjectDropdown() {
@@ -1367,9 +1397,14 @@
       renderApp();
     }
 
-    function triggerCSVUploadFromDropdown() {
-      document.getElementById('projectDropdownMenu').classList.add('hidden');
+    function triggerUploadFromAddMenu() {
+      document.getElementById('addDropdownMenu').classList.add('hidden');
       document.getElementById('csvFileInput').click();
+    }
+
+    function openNewEpisodeWizardFromAddMenu() {
+      document.getElementById('addDropdownMenu').classList.add('hidden');
+      openNewEpisodeWizard();
     }
 
     // =========================================================================
@@ -1517,14 +1552,14 @@
       };
 
       const tabs = [
-        { id: 'HOME', label: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`, count: null },
-        { id: 'SCENES', label: 'Obrazy', count: `${doneScenes}/${counts.SCENES}` },
-        { id: 'CAST', label: 'Účinkujúci', count: counts.CAST },
-        { id: 'LOCATIONS', label: 'Lokácie', count: counts.LOCATIONS },
-        { id: 'GASTRO', label: 'Gastro', count: counts.GASTRO },
-        { id: 'COSTUMES', label: 'Kostýmy', count: `${peopleWithCostumes.length} (${counts.COSTUMES})` },
-        { id: 'PROPS', label: 'Rekvizity', count: counts.PROPS },
-        { id: 'ALERTS', label: 'Pozor', count: counts.ALERTS, alert: true }
+        { id: 'HOME', label: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`, count: null, tooltip: 'Domov • Prehľad celej epizódy' },
+        { id: 'SCENES', label: 'Obrazy', count: `${doneScenes}/${counts.SCENES}`, tooltip: `${doneScenes} z ${counts.SCENES} obrazov natočených na pľaci` },
+        { id: 'CAST', label: 'Účinkujúci', count: counts.CAST, tooltip: `${counts.CAST} účinkujúcich (moderátori, herci, odborníci, komparz)` },
+        { id: 'LOCATIONS', label: 'Lokácie', count: `${counts.MAIN_LOCS}/${counts.LOCATIONS}`, tooltip: `${counts.MAIN_LOCS} hlavné stanovištia (areály) / ${counts.LOCATIONS} konkrétnych priestorov` },
+        { id: 'GASTRO', label: 'Gastro', count: counts.GASTRO, tooltip: `${counts.GASTRO} gastro scén (varenie, pečenie, degustácie a suroviny)` },
+        { id: 'COSTUMES', label: 'Kostýmy', count: `${peopleWithCostumes.length} (${counts.COSTUMES})`, tooltip: `${peopleWithCostumes.length} účinkujúcich s kostýmom • Celkovo ${counts.COSTUMES} rôznych outfitov/prezlekov` },
+        { id: 'PROPS', label: 'Rekvizity', count: counts.PROPS, tooltip: `${counts.PROPS} rekvizít a technického vybavenia pre natáčanie` },
+        { id: 'ALERTS', label: 'Pozor', count: counts.ALERTS, alert: true, tooltip: `${counts.ALERTS} kritických upozornení v scenári (riziká, špina, oheň, overenia)` }
       ];
 
       const isSearching = !!(appState.searchQuery || appState.searchCategoryFilter !== 'ALL');
@@ -1532,8 +1567,9 @@
 
       document.getElementById('navTabs').innerHTML = tabs.map(t => {
         const isActive = appState.activeTab === t.id && effectiveTab !== 'SEARCH';
+        const tipAttr = t.tooltip ? `title="${escapeHtml(t.tooltip)}"` : '';
         return `
-          <button onclick="navigateTab('${t.id}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
+          <button onclick="navigateTab('${t.id}')" ${tipAttr} class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
             isActive
               ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 shadow-2xs'
               : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900'
@@ -1559,10 +1595,8 @@
         let defaultCatForAdd = 'ÚČINKUJÚCI';
 
         if (effectiveTab === 'LOCATIONS') {
-          list = filteredItems.filter(i => i.group === 'LOCATIONS');
-          sectionTitle = 'Lokácie a priestory';
-          sectionSubtitle = 'Zoznam všetkých lokácií, interiérov a exteriérov — kliknite pre detail.';
-          defaultCatForAdd = 'LOKÁCIA (INT.)';
+          mainEl.innerHTML = renderLocationsView(project, locItems, mainLocGroups, itemScenesMap);
+          return;
         } else if (effectiveTab === 'CAST') {
           list = filteredItems.filter(i => i.group === 'CAST');
           sectionTitle = 'Účinkujúci';
@@ -1708,6 +1742,7 @@
             ${cards.map(c => `
               <button
                 onclick="navigateTab('${c.id}')"
+                title="Kliknite pre otvorenie sekcie: ${c.title} (${c.subtitle})"
                 class="group text-left bg-gradient-to-br ${c.accent} bg-white dark:bg-zinc-900 border rounded-3xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-md flex flex-col justify-between gap-5"
               >
                 <div class="flex items-center justify-between w-full">
@@ -1847,7 +1882,7 @@
         <div class="space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
             <div>
-              <h2 class="text-lg sm:text-xl font-extrabold tracking-tight">Lokácie a presuny</h2>
+              <h2 class="text-lg sm:text-xl font-extrabold tracking-tight">Lokácie (${mainLocGroups.length}/${locItems.length})</h2>
               <p class="text-xs text-zinc-500 dark:text-zinc-400">
                 Hlavné lokácie spájajú miestnosti v jednom objekte (kde raz zaparkujete a iba prenášate techniku).
               </p>
@@ -2130,51 +2165,90 @@
           <div class="flex flex-wrap items-center justify-between gap-2 px-1">
             <div>
               <h2 class="text-lg sm:text-xl font-extrabold tracking-tight">Obrazy</h2>
-              <p class="text-xs text-zinc-500 dark:text-zinc-400">Kliknite na obraz pre celú zostavu na pľaci a označenie natočeného obrazu.</p>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">Chronologický prehľad obrazov na pľac.</p>
             </div>
             <div class="text-xs font-extrabold px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
-              Natočené: ${doneCount} /${filteredScenes.length}
+              Natočené: ${doneCount} / ${filteredScenes.length}
             </div>
           </div>
 
           ${filteredScenes.length === 0 ? `
             <div class="text-center py-16 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800">
-              <p class="text-sm font-bold text-zinc-500">Zatiaľ nie sú zadané žiadne čísla obrazov (napr. 1/1, 2/1).</p>
-              <p class="text-xs text-zinc-400 mt-1">Keď pri položkách vyplníte pole „Obrazy“, automaticky sa tu vytvoria karty obrazov.</p>
+              <p class="text-sm font-bold text-zinc-500">Nenašli sa žiadne obrazy zodpovedajúce filtru.</p>
             </div>
           ` : `
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
               ${filteredScenes.map(sc => {
                 const scObj = sceneMap[sc];
                 const locs = scObj.items.filter(i => i.group === 'LOCATIONS');
                 const cast = scObj.items.filter(i => i.group === 'CAST');
+                const gastro = scObj.items.filter(i => i.group === 'GASTRO');
+                const scriptIt = scObj.items.find(i => i.group === 'SCRIPT');
                 const isDone = scObj.done;
-                const locName = locs.length > 0
-                  ? locs[0].title.replace(/^Kaštieľ\s*[–\-]\s*|^Hrad\s*[–\-]\s*/i, '')
-                  : 'Detail vnútri';
+
+                const locItem = locs.length > 0 ? locs[0] : null;
+                const locName = locItem
+                  ? locItem.title.replace(/^Areál\s*(\([^)]*\))?\s*[:–\-]?\s*/i, '').replace(/^Kaštieľ\s*[–\-]\s*|^Hrad\s*[–\-]\s*/i, '').trim()
+                  : 'Nezadaná lokácia';
+
+                let rawType = locItem && locItem.locationOrEp ? locItem.locationOrEp.toUpperCase().trim() : '';
+                let cleanType = '';
+                if (rawType.includes('EXT')) cleanType = 'EXT.';
+                else if (rawType.includes('INT')) cleanType = 'INT.';
+
+                let rawTime = scriptIt && scriptIt.locationOrEp ? scriptIt.locationOrEp.toUpperCase().trim() : '';
+                let cleanTime = rawTime.replace(/^Areál\s*(\([^)]*\))?\s*[:–\-]?\s*/i, '').trim();
+
+                const topMetaRight = [cleanType, cleanTime].filter(Boolean).join(' ');
+
+                let synop = '';
+                if (scriptIt && scriptIt.title && scriptIt.title !== 'Scenár obrazu') {
+                  synop = scriptIt.title.replace(/^\d+\/\d+\s*/, '').replace(/^[–\-•\s]+/, '').trim();
+                }
+
+                const castNames = cast.map(c => c.title.replace(/^Komparz:\s*/i, '').trim()).filter(Boolean);
+                const castText = castNames.join(', ');
+
+                const isFoodScene = gastro.length > 0;
+
+                const cardAppearance = isFoodScene
+                  ? 'bg-purple-500/10 dark:bg-purple-950/25 border-purple-500/50 dark:border-purple-500/40'
+                  : 'bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80';
 
                 return `
                   <div
                     onclick="openSceneModal('${escapeHtml(sc)}')"
-                    class="group cursor-pointer bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 hover:border-amber-500 rounded-2xl p-3.5 transition flex flex-col justify-between gap-3 shadow-2xs relative overflow-hidden ${
+                    class="group cursor-pointer ${cardAppearance} hover:border-amber-500 rounded-3xl p-4 sm:p-5 transition flex flex-col justify-between gap-3 shadow-2xs relative overflow-hidden ${
                       isDone ? 'opacity-40 grayscale script-done-cross' : ''
                     }"
                   >
-                    <div class="flex items-center justify-between gap-2">
-                      <span class="text-sm font-extrabold px-2.5 py-0.5 rounded-lg bg-amber-500 text-zinc-950">
-                        ${escapeHtml(sc)}
-                      </span>
-                      ${isDone ? `<span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Natočené</span>` : ''}
-                    </div>
+                    <div class="space-y-2">
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="text-xs sm:text-sm font-extrabold px-2.5 py-1 rounded-xl bg-amber-500 text-zinc-950">
+                          ${escapeHtml(sc)}
+                        </span>
 
-                    <div>
-                      <div class="text-xs font-bold text-zinc-800 dark:text-zinc-100 line-clamp-1">
+                        <div class="text-[11px] font-extrabold text-zinc-400 truncate text-right">
+                          ${isDone ? `<span class="text-emerald-600 dark:text-emerald-400 font-extrabold">Natočené</span>` : `<span>${escapeHtml(topMetaRight)}</span>`}
+                        </div>
+                      </div>
+
+                      <div class="text-xs font-bold text-amber-600 dark:text-amber-500 truncate">
                         ${escapeHtml(locName)}
                       </div>
-                      <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                        ${cast.length} účinkujúcich • ${scObj.items.length} položiek
-                      </div>
+
+                      ${synop ? `
+                        <div class="text-sm font-extrabold text-zinc-900 dark:text-white leading-snug line-clamp-2">
+                          ${escapeHtml(synop)}
+                        </div>
+                      ` : ''}
                     </div>
+
+                    ${castText ? `
+                      <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-[11px] font-medium text-zinc-400 line-clamp-1">
+                        ${escapeHtml(castText)}
+                      </div>
+                    ` : ''}
                   </div>
                 `;
               }).join('')}
@@ -2419,7 +2493,37 @@
       const locs = scObj.items.filter(i => i.group === 'LOCATIONS');
       const cast = scObj.items.filter(i => i.group === 'CAST');
       const gastro = scObj.items.filter(i => i.group === 'GASTRO');
-      const props = scObj.items.filter(i => i.group === 'PROPS');
+      
+      const propsAll = scObj.items.filter(i => i.group === 'PROPS');
+      const standaloneCostumes = scObj.items.filter(i => i.group === 'COSTUMES');
+
+      const alerts = propsAll.filter(i => i.category === 'POZOR' || /uvedenie|upozornenie|pozor/i.test(i.title));
+      const pureProps = propsAll.filter(i => i.category !== 'POZOR' && !/uvedenie|upozornenie|pozor/i.test(i.title));
+
+      const sceneCostumesList = [];
+      cast.forEach(actor => {
+        const parsed = parseStructuredCostumes(actor.details, actor.title);
+        parsed.costumes.forEach(c => {
+          const disc = c.discrete && c.discrete.length > 0 ? c.discrete : Array.from(expandSceneTokens(c.scenesRaw));
+          if (disc.includes(sceneCode)) {
+            sceneCostumesList.push({
+              actorName: actor.title,
+              costumeName: c.name,
+              costumeNum: c.num,
+              actorId: actor.id
+            });
+          }
+        });
+      });
+
+      standaloneCostumes.forEach(cItem => {
+        sceneCostumesList.push({
+          actorName: 'Kostým',
+          costumeName: cItem.title,
+          costumeNum: '',
+          actorId: cItem.id
+        });
+      });
 
       document.getElementById('modalTitleWrap').innerHTML = `
         <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">${escapeHtml(project.name)}</span>
@@ -2477,7 +2581,7 @@
       };
 
       const renderGroupList = (label, arr) => {
-        if (arr.length === 0) return '';
+        if (!arr || arr.length === 0) return '';
         return `
           <div class="space-y-1.5">
             <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">${label} (${arr.length})</span>
@@ -2485,8 +2589,7 @@
               ${arr.map(it => `
                 <div onclick="openItemModal('${it.id}')" class="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition flex items-center justify-between gap-3">
                   <div class="min-w-0">
-                    <div class="font-bold text-xs sm:text-sm text-zinc-900 dark:text-white truncate">${escapeHtml(it.title)}</div>
-                    <div class="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1 mt-0.5">${escapeHtml(it.details)}</div>
+                    <div class="font-bold text-xs sm:text-sm text-zinc-900 dark:text-white truncate">${escapeHtml(it.title)}</div>${it.details ? `<div class="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1 mt-0.5">${escapeHtml(it.details)}</div>` : ''}
                   </div>
                   <span class="text-amber-500 shrink-0">${ICONS.chevronRight}</span>
                 </div>
@@ -2496,11 +2599,36 @@
         `;
       };
 
+      const renderCostumesSection = () => {
+        if (sceneCostumesList.length === 0) return '';
+        return `
+          <div class="space-y-1.5">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-pink-600 dark:text-pink-400 block">Kostýmy (${sceneCostumesList.length})</span>
+            <div class="bg-pink-500/5 border border-pink-500/20 rounded-2xl divide-y divide-pink-500/15 overflow-hidden">
+              ${sceneCostumesList.map(c => `
+                <div onclick="openItemModal('${c.actorId}')" class="p-3 hover:bg-pink-500/10 cursor-pointer transition flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="font-bold text-xs sm:text-sm text-zinc-900 dark:text-white">
+                      <span class="text-pink-600 dark:text-pink-400 font-extrabold mr-1.5">${escapeHtml(c.actorName)}:</span>
+                      <span>${escapeHtml(c.costumeName)}</span>
+                    </div>
+                  </div>
+                  <span class="text-pink-500 shrink-0">${ICONS.chevronRight}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      };
+
       document.getElementById('modalBody').innerHTML = `
-        ${renderScriptPreview()}${renderGroupList('Lokácia', locs)}
+        ${renderScriptPreview()}
+        ${renderGroupList('Lokácia', locs)}
         ${renderGroupList('Účinkujúci na pľaci', cast)}
+        ${renderCostumesSection()}
+        ${renderGroupList('Rekvizity', pureProps)}
         ${renderGroupList('Gastro v obraze', gastro)}
-        ${renderGroupList('Rekvizity a technika', props)}
+        ${renderGroupList('Upozornenia a technika (POZOR)', alerts)}
       `;
 
       document.getElementById('modalFooter').innerHTML = `
@@ -2979,27 +3107,356 @@
       renderApp();
     }
 
+    async function extractTextFromPDF(arrayBuffer) {
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        let lastY = -1;
+        content.items.forEach(item => {
+          if (lastY !== item.transform[5] && lastY !== -1) {
+            fullText += '\n';
+          }
+          fullText += item.str;
+          lastY = item.transform[5];
+        });
+        fullText += '\n';
+      }
+      return fullText;
+    }
+
     function handleFileUpload(event) {
       const file = event.target.files?.[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const content = e.target.result;
-        let cleanName = file.name.replace(/\.csv$/i, '').replace(/^Vyrobny_list_/i, '').replace(/_/g, ' ').trim();
-        if (!cleanName) cleanName = 'Nová epizóda';
-        const customName = prompt('Názov výrobného listu (časti):', cleanName);
-        if (!customName) return;
+      
+      const fileName = file.name.toLowerCase();
+      let cleanName = file.name.replace(/\.(csv|docx|pdf)$/i, '').replace(/^Vyrobny_list_/i, '').replace(/_/g, ' ').trim();
+      if (!cleanName) cleanName = 'Nová epizóda';
 
-        appState.projects[customName] = parseCSVToProject(customName, content);
-        appState.activeProject = customName;
-        appState.activeTab = 'HOME';
-        appState.episodeFilter = 'ALL';
-        saveState();
-        syncHistoryPush();
-        renderApp();
-      };
-      reader.readAsText(file, 'UTF-8');
+      const customName = prompt('Názov výrobného listu (časti):', cleanName);
+      if (!customName) {
+        event.target.value = '';
+        return;
+      }
+
+      if (fileName.endsWith('.docx')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const arrayBuffer = e.target.result;
+          mammoth.extractRawText({ arrayBuffer: arrayBuffer })
+            .then(function(result) {
+              const text = result.value;
+              processExtractedDOCXScript(customName, text);
+            })
+            .catch(function(err) {
+              alert('Chyba pri čítaní DOCX: ' + err.message);
+            });
+        };
+        reader.readAsArrayBuffer(file);
+      } else if (fileName.endsWith('.pdf')) {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          const arrayBuffer = e.target.result;
+          try {
+            const text = await extractTextFromPDF(arrayBuffer);
+            processExtractedDOCXScript(customName, text);
+          } catch (err) {
+            alert('Chyba pri čítaní PDF: ' + err.message);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else if (fileName.endsWith('.csv')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const content = e.target.result;
+          appState.projects[customName] = parseCSVToProject(customName, content);
+          appState.activeProject = customName;
+          appState.activeTab = 'HOME';
+          appState.episodeFilter = 'ALL';
+          saveState();
+          syncHistoryPush();
+          renderApp();
+        };
+        reader.readAsText(file, 'UTF-8');
+      } else {
+        alert('Tento formát súboru zatiaľ nie je podporovaný (vyberte .docx, .pdf alebo .csv).');
+      }
       event.target.value = '';
+    }
+
+function processExtractedDOCXScript(projectName, rawText) {
+      const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      const scenes = [];
+      let currentScene = null;
+      const headerRegex = /^(\d+\/\d+)\s+(EXT\.|INT\.)\s+(.*)$/i;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const match = line.match(headerRegex);
+
+        if (match) {
+          if (currentScene) scenes.push(currentScene);
+          currentScene = {
+            scNum: match[1].trim(),
+            intExt: match[2].trim().toUpperCase(),
+            locInfo: match[3].trim(),
+            castLine: '',
+            costumesLine: '',
+            propsLine: '',
+            gastroLine: '',
+            komparzLine: '',
+            scriptLines: [line]
+          };
+        } else if (currentScene) {
+          currentScene.scriptLines.push(line);
+          const lowLine = line.toLowerCase();
+          
+          if (currentScene.scriptLines.length === 2) {
+             if (!line.startsWith('(') && !lowLine.startsWith('vo:')) {
+                currentScene.castLine = line;
+             }
+          } else if (currentScene.scriptLines.length <= 8) {
+             if (lowLine.startsWith('(kostým')) currentScene.costumesLine = line;
+             else if (lowLine.startsWith('(rekvizit')) currentScene.propsLine = line;
+             else if (lowLine.startsWith('(gastro')) currentScene.gastroLine = line;
+             else if (lowLine.startsWith('(komparz')) currentScene.komparzLine = line;
+          }
+        }
+      }
+      if (currentScene) scenes.push(currentScene);
+
+      if (scenes.length === 0) {
+        alert('V dokumente sa nenašli žiadne obrazy. Uistite sa, že obsahujú zápis vo formáte "1/32 EXT. LOKÁCIA".');
+        return;
+      }
+
+      const getBaseId = (type, index) => `${projectName.replace(/\s+/g, '_')}_${type}_${index}_${Math.random().toString(36).slice(2,6)}`;
+      const registry = { LOCATIONS: {}, CAST: {}, PROPS: {}, GASTRO: {}, ALERTS: [], SCRIPTS: [] };
+
+      scenes.forEach(scene => {
+        let timeStr = '';
+        let cleanLoc = scene.locInfo;
+        if (cleanLoc.includes(' - ')) {
+          const pts = cleanLoc.split(' - ');
+          timeStr = pts.pop().trim();
+          cleanLoc = pts.join(' - ').trim();
+        } else if (cleanLoc.includes('-')) {
+          const pts = cleanLoc.split('-');
+          timeStr = pts.pop().trim();
+          cleanLoc = pts.join('-').trim();
+        }
+        cleanLoc = cleanLoc.split('(')[0].trim() || cleanLoc;
+        const locKey = scene.intExt + ' ' + cleanLoc;
+
+        if (!registry.LOCATIONS[locKey]) {
+          registry.LOCATIONS[locKey] = {
+            category: 'LOKÁCIA (' + scene.intExt.replace('.', '') + ')',
+            mainLocation: projectName,
+            title: cleanLoc,
+            locationOrEp: scene.intExt,
+            details: timeStr || scene.locInfo,
+            scenes: new Set()
+          };
+        }
+        registry.LOCATIONS[locKey].scenes.add(scene.scNum);
+
+        let synopsis = '';
+        for (let j = 1; j < scene.scriptLines.length; j++) {
+           const l = scene.scriptLines[j];
+           if (l !== scene.castLine && !l.startsWith('(') && !l.toLowerCase().startsWith('vo:')) {
+              synopsis = l;
+              break;
+           }
+        }
+
+        registry.SCRIPTS.push({
+          id: getBaseId('script', scene.scNum.replace('/', '_')),
+          category: 'SCENÁR',
+          group: 'SCRIPT',
+          mainLocation: '',
+          title: synopsis || 'Scenár obrazu',
+          scenesRaw: scene.scNum,
+          locationOrEp: timeStr,
+          details: scene.scriptLines.join(' || '),
+          userNotes: '',
+          checked: false
+        });
+
+        let cleanCostume = '';
+        if (scene.costumesLine && !scene.costumesLine.toLowerCase().includes('žiadne')) {
+           cleanCostume = scene.costumesLine.replace(/^\(kostýmy:\s*/i, '').replace(/^\(kostým:\s*/i, '').replace(/\)$/, '').trim();
+        }
+
+        if (scene.castLine) {
+          const actors = scene.castLine.split(',').map(s => s.trim().replace(/\s*\(.*?\)/g, '')).filter(Boolean);
+          actors.forEach(actor => {
+            if (actor.toLowerCase().includes('komparz') || actor.toLowerCase().includes('dav')) {
+               actor = 'Komparz: ' + actor;
+            }
+            if (!registry.CAST[actor]) registry.CAST[actor] = { scenes: new Set(), costumesMap: {} };
+            registry.CAST[actor].scenes.add(scene.scNum);
+            if (cleanCostume) {
+               if (!registry.CAST[actor].costumesMap[cleanCostume]) registry.CAST[actor].costumesMap[cleanCostume] = new Set();
+               registry.CAST[actor].costumesMap[cleanCostume].add(scene.scNum);
+            }
+          });
+        }
+
+        if (scene.komparzLine && !scene.komparzLine.toLowerCase().includes('žiadne')) {
+          let cleanK = scene.komparzLine.replace(/^\(komparz:\s*/i, '').replace(/\)$/, '').trim();
+          cleanK.split(',').map(s => s.trim()).filter(Boolean).forEach(k => {
+             let kTitle = 'Komparz: ' + k.charAt(0).toUpperCase() + k.slice(1);
+             if (!registry.CAST[kTitle]) registry.CAST[kTitle] = { scenes: new Set(), costumesMap: {} };
+             registry.CAST[kTitle].scenes.add(scene.scNum);
+             if (cleanCostume) {
+                if (!registry.CAST[kTitle].costumesMap[cleanCostume]) registry.CAST[kTitle].costumesMap[cleanCostume] = new Set();
+                registry.CAST[kTitle].costumesMap[cleanCostume].add(scene.scNum);
+             }
+          });
+        }
+
+        if (scene.propsLine && !scene.propsLine.toLowerCase().includes('žiadne')) {
+          let cleanP = scene.propsLine.replace(/^\(rekvizity:\s*/i, '').replace(/\)$/, '').trim();
+          cleanP.split(',').map(s => s.trim()).filter(Boolean).forEach(p => {
+             let pTitle = p.charAt(0).toUpperCase() + p.slice(1);
+             if (!registry.PROPS[pTitle]) registry.PROPS[pTitle] = new Set();
+             registry.PROPS[pTitle].add(scene.scNum);
+          });
+        }
+
+        let hasGastro = false;
+        if (scene.gastroLine && !scene.gastroLine.toLowerCase().includes('žiadne')) {
+          let cleanG = scene.gastroLine.replace(/^\(gastro:\s*/i, '').replace(/\)$/, '').trim();
+          cleanG.split(',').map(s => s.trim()).filter(Boolean).forEach(g => {
+             let gTitle = g.charAt(0).toUpperCase() + g.slice(1);
+             if (!registry.GASTRO[gTitle]) registry.GASTRO[gTitle] = new Set();
+             registry.GASTRO[gTitle].add(scene.scNum);
+          });
+          hasGastro = true;
+        }
+
+        if (!hasGastro) {
+           const textLower = scene.scriptLines.join(' ').toLowerCase();
+           const kw = ['víno', 'kaša', 'kašu', 'hrušk', 'slivk', 'koláč', 'med ', 'medom', 'orech', 'pivo', 'mäso', 'koreni'];
+           const hits = kw.filter(k => textLower.includes(k));
+           if (hits.length >= 2) {
+              let gTitle = "Príprava / Jedlo (" + hits.slice(0, 3).join(', ') + ")";
+              if (!registry.GASTRO[gTitle]) registry.GASTRO[gTitle] = new Set();
+              registry.GASTRO[gTitle].add(scene.scNum);
+           }
+        }
+
+        scene.scriptLines.forEach((line, idx) => {
+          if (line.match(/\bPOZOR\b[:!]/i) || line.toLowerCase().startsWith('(pozor:')) {
+             let cleanAlert = line.replace(/^\(pozor:\s*/i, '').replace(/\)$/, '').replace(/^POZOR[:!]\s*/i, '').trim();
+             registry.ALERTS.push({
+                id: getBaseId('alert', scene.scNum.replace('/','_') + idx),
+                category: 'POZOR',
+                group: 'PROPS',
+                mainLocation: '',
+                title: 'Upozornenie (Obraz ' + scene.scNum + ')',
+                scenesRaw: scene.scNum,
+                locationOrEp: locKey,
+                details: cleanAlert,
+                userNotes: '',
+                checked: false
+             });
+          }
+        });
+      });
+
+      const finalItems = [];
+
+      let idxLoc = 0;
+      for (const [locKey, data] of Object.entries(registry.LOCATIONS)) {
+         finalItems.push({
+            id: getBaseId('loc', idxLoc++),
+            category: data.category,
+            group: 'LOCATIONS',
+            mainLocation: data.mainLocation,
+            title: data.title,
+            scenesRaw: Array.from(data.scenes).sort((a,b)=>parseInt(a.split('/')[0])-parseInt(b.split('/')[0])).join(', '),
+            locationOrEp: data.locationOrEp,
+            details: data.details,
+            userNotes: '',
+            checked: false
+         });
+      }
+
+      let idxCast = 0;
+      for (const [actor, data] of Object.entries(registry.CAST)) {
+         let costumeDetails = '';
+         let cNum = 1;
+         const costKeys = Object.keys(data.costumesMap);
+         if (costKeys.length > 0) {
+           for (const cName of costKeys) {
+              const scs = Array.from(data.costumesMap[cName]).sort((a,b)=>parseInt(a.split('/')[0])-parseInt(b.split('/')[0])).join(', ');
+              costumeDetails += `${cNum}) ${cName} (${scs}). `;
+              cNum++;
+           }
+         }
+         finalItems.push({
+            id: getBaseId('cast', idxCast++),
+            category: 'ÚČINKUJÚCI',
+            group: 'CAST',
+            mainLocation: '',
+            title: actor,
+            scenesRaw: Array.from(data.scenes).sort((a,b)=>parseInt(a.split('/')[0])-parseInt(b.split('/')[0])).join(', '),
+            locationOrEp: '',
+            details: costumeDetails.trim(),
+            userNotes: '',
+            checked: false
+         });
+      }
+
+      let idxProp = 0;
+      for (const [prop, scenesSet] of Object.entries(registry.PROPS)) {
+         finalItems.push({
+            id: getBaseId('prop', idxProp++),
+            category: 'REKVIZITY',
+            group: 'PROPS',
+            mainLocation: '',
+            title: prop,
+            scenesRaw: Array.from(scenesSet).sort((a,b)=>parseInt(a.split('/')[0])-parseInt(b.split('/')[0])).join(', '),
+            locationOrEp: '',
+            details: '',
+            userNotes: '',
+            checked: false
+         });
+      }
+
+      let idxGastro = 0;
+      for (const [gastro, scenesSet] of Object.entries(registry.GASTRO)) {
+         finalItems.push({
+            id: getBaseId('gastro', idxGastro++),
+            category: 'GASTRO',
+            group: 'GASTRO',
+            mainLocation: '',
+            title: gastro,
+            scenesRaw: Array.from(scenesSet).sort((a,b)=>parseInt(a.split('/')[0])-parseInt(b.split('/')[0])).join(', '),
+            locationOrEp: '',
+            details: '',
+            userNotes: '',
+            checked: false
+         });
+      }
+
+      finalItems.push(...registry.ALERTS);
+      finalItems.push(...registry.SCRIPTS);
+
+      appState.projects[projectName] = {
+        name: projectName,
+        col4Header: 'TYP / LOKALITA',
+        items: finalItems,
+        sceneDone: {}
+      };
+      appState.activeProject = projectName;
+      appState.activeTab = 'HOME';
+      appState.episodeFilter = 'ALL';
+      saveState();
+      syncHistoryPush();
+      renderApp();
     }
 
     function exportCurrentCSV() {
@@ -4630,6 +5087,47 @@ function renderScriptToolbar() {
     if (localStorage.getItem('google_drive_script_url')) {
       syncDataFromGoogleDrive();
     }
+  </script>
+<div id="appFloatingTooltip" class="fixed pointer-events-none z-[100] hidden px-3 py-1.5 text-xs font-semibold text-zinc-100 bg-zinc-900/95 dark:bg-zinc-800/95 border border-zinc-700/80 rounded-xl shadow-2xl backdrop-blur-md transition-opacity duration-150 max-w-xs text-center leading-snug"></div>
+  <script>
+    (function initModernTooltips() {
+      const tipBox = document.getElementById('appFloatingTooltip');
+      let activeEl = null;
+
+      document.addEventListener('mouseover', (e) => {
+        const target = e.target.closest('[title]');
+        if (!target) return;
+        activeEl = target;
+        const text = target.getAttribute('title');
+        if (!text) return;
+
+        target.setAttribute('data-stored-title', text);
+        target.removeAttribute('title');
+
+        tipBox.textContent = text;
+        tipBox.classList.remove('hidden');
+        tipBox.style.opacity = '1';
+
+        const r = target.getBoundingClientRect();
+        const topPos = r.top - tipBox.offsetHeight - 8;
+        const leftPos = Math.max(10, Math.min(window.innerWidth - tipBox.offsetWidth - 10, r.left + (r.width / 2) - (tipBox.offsetWidth / 2)));
+
+        tipBox.style.top = (topPos < 10 ? r.bottom + 8 : topPos) + 'px';
+        tipBox.style.left = leftPos + 'px';
+      });
+
+      document.addEventListener('mouseout', (e) => {
+        if (!activeEl) return;
+        const stored = activeEl.getAttribute('data-stored-title');
+        if (stored) {
+          activeEl.setAttribute('title', stored);
+          activeEl.removeAttribute('data-stored-title');
+        }
+        tipBox.classList.add('hidden');
+        tipBox.style.opacity = '0';
+        activeEl = null;
+      });
+    })();
   </script>
 </body>
 </html>
