@@ -5458,22 +5458,6 @@ function cloneBlockForPrint(blockEl) {
       const scaler = document.getElementById('pdfPreviewViewportScaler');
       if (!paperWrap || !btn) return;
 
-      if (cachedReadyPdfFile && navigator.canShare && navigator.canShare({ files: [cachedReadyPdfFile] })) {
-        try {
-          await navigator.share({
-            files: [cachedReadyPdfFile],
-            title: cachedReadyPdfFile.name
-          });
-          return;
-        } catch (shareErr) {
-          if (shareErr && shareErr.name === 'AbortError') return;
-          if (cachedReadyPdfBlob) {
-            triggerDirectPdfDownload(cachedReadyPdfBlob, cachedReadyPdfFile.name);
-          }
-          return;
-        }
-      }
-
       const pages = Array.from(paperWrap.querySelectorAll('.a4-pdf-page'));
       if (pages.length === 0) return;
 
@@ -5513,24 +5497,11 @@ function cloneBlockForPrint(blockEl) {
 
         const pdfBlob = buildPdfBlobFromJpegPages(pagesData);
         const fileName = `${pdfPreviewTitle}.pdf`;
-        const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
-        cachedReadyPdfBlob = pdfBlob;
-        cachedReadyPdfFile = pdfFile;
+        // Otvorí čisté PDF priamo v novom okne prehliadača, odkiaľ ho na iPade vytlačíš jedným klikom bez akejkoľvek pätičky
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        window.open(blobUrl, '_blank');
 
-        if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-          try {
-            await navigator.share({
-              files: [pdfFile],
-              title: fileName
-            });
-          } catch (shareErr) {
-            if (shareErr && shareErr.name === 'AbortError') return;
-            triggerDirectPdfDownload(pdfBlob, fileName);
-          }
-        } else {
-          triggerDirectPdfDownload(pdfBlob, fileName);
-        }
       } catch (err) {
         if (scaler) scaler.style.transform = prevTransform;
         if (err && err.name !== 'AbortError') {
@@ -5538,14 +5509,7 @@ function cloneBlockForPrint(blockEl) {
         }
       } finally {
         btn.disabled = false;
-        if (cachedReadyPdfFile) {
-          btn.innerHTML = `
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-            <span>Zdieľať / Tlačiť PDF</span>
-          `;
-        } else {
-          btn.innerHTML = origBtnHtml;
-        }
+        btn.innerHTML = origBtnHtml;
       }
     }
 
